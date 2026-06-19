@@ -23,6 +23,7 @@
     </properties>
 
     <modules>
+        <module>step-00-your-workspace</module>
     </modules>
 
     <repositories>
