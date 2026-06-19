@@ -11,6 +11,7 @@
 
     <modules>
         <module>conference-mcp-server</module>
+        <module>conference-assistant</module>
     </modules>
 
 </project>

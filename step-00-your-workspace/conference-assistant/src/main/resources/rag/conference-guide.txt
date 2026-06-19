@@ -1,0 +1,15 @@
+JavaZone 2026 Conference Guide
+
+JavaZone is the annual Java conference held in Oslo, Norway.
+The conference features talks, workshops, and lightning talks on Java, JVM languages, and related technologies.
+Attendees can network with developers from across the Nordic region and beyond.
+
+Venue:
+JavaZone takes place at Oslo Spektrum in central Oslo.
+The venue is easily accessible by public transport.
+
+Sessions:
+The conference runs over two full days with multiple tracks running in parallel.
+Topics include Java, Kotlin, security, cloud, architecture, and developer tools.
+
+Food and drinks are provided throughout the conference day.
