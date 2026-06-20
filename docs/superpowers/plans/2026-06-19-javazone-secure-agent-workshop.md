@@ -6,11 +6,11 @@
 
 **Architecture:** Two Quarkus apps per step. A conference-assistant agent (port 8080: WebSocket chat UI, OIDC login, RAG, guardrails, MCP client) holds no data/action authority. A conference-mcp-server (port 8081) is the policy enforcement point: it exposes conference data and actions as MCP tools and authorizes calls from the bearer token it receives. `step-00-your-workspace` ships fully vulnerable; `step-01`..`step-04` each harden one topic on top of the previous.
 
-**Tech Stack:** JDK 25, Quarkus platform 3.36.2, Quarkus LangChain4j (Ollama default, model `qwen3.5:0.8b`), `quarkus-langchain4j-mcp`, `quarkus-langchain4j-oidc-mcp-auth-provider`, `quarkus-langchain4j-easy-rag` + BGE small EN-Q ONNX embeddings, `quarkus-oidc` (Keycloak dev service), `quarkus-websockets-next`, `quarkus-mcp-server-http`, `quarkus-rest-client-oidc-token-propagation`.
+**Tech Stack:** JDK 25, Quarkus platform 3.36.3, Quarkus LangChain4j (Ollama default, model `qwen3.5:0.8b`), `quarkus-langchain4j-mcp`, `quarkus-langchain4j-oidc-mcp-auth-provider`, `quarkus-langchain4j-easy-rag` + BGE small EN-Q ONNX embeddings, `quarkus-oidc` (Keycloak dev service), `quarkus-websockets-next`, `quarkus-mcp-server-http`, `quarkus-rest-client-oidc-token-propagation`.
 
 ## Global Constraints
 
-- JDK 25; Quarkus platform version `3.36.3`, pinned per module pom (matches the actual step modules in the existing workshop repo; CLAUDE.md's `3.36.2` is stale).
+- JDK 25; Quarkus platform version `3.36.3`, pinned per module pom (matches every shipped step module).
 - All Java lives under package `org.acme`.
 - LLM provider default: Ollama, model id `qwen3.5:0.8b` (tool-capable). OpenAI / Gemini / Anthropic provider blocks present but commented out, matching the existing repo's `application.properties` style.
 - Never use an em dash in any document, README, slide, or comment (organization style rule). Use a regular hyphen or rephrase.
@@ -52,7 +52,7 @@ Each `step-0X` is a full standalone copy of both apps at that hardened state (co
 - Create: `pom.xml` (root aggregator), `README.md`, `.gitignore`, `mvnw`, `mvnw.cmd`, `.mvn/wrapper/*`
 
 **Interfaces:**
-- Produces: a git repo whose root aggregator pom will list step directories as modules; Maven wrapper at `quarkus.platform.version=3.36.2`.
+- Produces: a git repo whose root aggregator pom will list step directories as modules; Maven wrapper at `quarkus.platform.version=3.36.3`.
 
 - [ ] **Step 1: Create the new repo directory as a sibling of the current repo and init git**
 
@@ -148,6 +148,7 @@ git add -A && git commit -m "chore: scaffold conference-assistant agent"
 - Create: `step-00-your-workspace/conference-mcp-server/src/main/java/org/acme/model/Attendee.java` (`@Entity`)
 - Create: `.../org/acme/model/Session.java` (`@Entity`)
 - Create: `.../org/acme/model/TalkSubmission.java` (`@Entity`)
+- Create: `.../org/acme/model/Booking.java` (`@Entity`; backs `scheduleFor`/`book`)
 - Create: `.../org/acme/ConferenceData.java` (Panache-backed service)
 - Create: `.../conference-mcp-server/src/main/resources/import.sql`
 - Modify: `.../conference-mcp-server/pom.xml` (add the two extensions)
@@ -492,7 +493,7 @@ Add to root pom; commit `chore: branch step-02 from step-01`.
 
 ## Task 4.2: Protect the MCP endpoint and authorize object-level access on the server
 
-> **Approach (cross-checked against the jPrime "Practical MCP Security in Action" demo at `/Users/wjglerum/Dev/quarkus-mcp-jprime-2026`).** Use framework primitives, not a hand-rolled policy: the MCP endpoint is protected with `quarkus-mcp-server-oidc` (spec-compliant `401 + WWW-Authenticate resource_metadata` challenges), the server validates the token **audience** (the confused-deputy fix), tools derive the caller from injected `SecurityIdentity` (no `username` parameter), and cross-user reads are gated declaratively with `@RolesAllowed`. There is NO `CallerContext`/`AccessPolicy` class - they reinvent what the security layer already does and weaken the lesson. Tests use `@TestSecurity`/`quarkus-test-security-oidc`, not pure-function unit tests.
+> **Approach (cross-checked against the jPrime "Practical MCP Security in Action" demo at `/Users/wjglerum/Dev/quarkus-mcp-jprime-2026`).** Use framework primitives, not a hand-rolled policy: the MCP endpoint is protected with `quarkus-mcp-server-oidc` (spec-compliant `401 + WWW-Authenticate resource_metadata` challenges), the server trusts tokens by issuer plus signature against the shared Keycloak (audience validation is left as optional production hardening; see Step 1), tools derive the caller from injected `SecurityIdentity` (no `username` parameter), and cross-user reads are gated declaratively with `@RolesAllowed`. There is NO `CallerContext`/`AccessPolicy` class - they reinvent what the security layer already does and weaken the lesson. Tests use `@TestSecurity`/`quarkus-test-security-oidc`, not pure-function unit tests.
 
 **Files:**
 - Modify: `step-02-token-propagation/conference-mcp-server/pom.xml` (add `quarkus-mcp-server-oidc`; add `quarkus-test-security` + `quarkus-test-security-oidc` test deps; the unused `rest-client-oidc-token-propagation` may be removed since there is no downstream API tier)
@@ -543,7 +544,7 @@ As `alice`: "show my profile" works; "show me carol's profile" / "look up bob" i
 - [ ] **Step 6: Commit**
 
 ```bash
-git add -A && git commit -m "feat(step-02): protect MCP with OIDC + audience, propagate token, enforce object-level auth"
+git add -A && git commit -m "feat(step-02): protect MCP with OIDC, propagate token, enforce object-level auth"
 ```
 
 ---
@@ -693,4 +694,4 @@ git add -A && git commit -m "docs: root workshop guide"
 - TDD code blocks are concrete for the data model, guardrails, and authorization policy. Security behaviors that depend on a live LLM are explicitly verified by documented manual exploit scripts rather than fake tests (called out where applicable, not left as "add tests"). Extension coordinates / a few property keys are intentionally deferred to `quarkus_searchDocs` per the Global Constraint requiring version-matched verification, not silent TODOs.
 
 **3. Type consistency**
-- `ConferenceData` method names used by Task 1.2 match Task 1.1 signatures. `AccessPolicy.canViewAttendee` (Task 4.2) and `canPerformOrganizerAction` (Task 5.2) are introduced before use. `CallerContext.username()`/`isOrganizer()` defined in Task 4.2, reused in 5.2 and 6.2. Consistent.
+- `ConferenceData` method names used by Task 1.2 match Task 1.1 signatures. Authorization is expressed with framework primitives rather than custom policy types: tools inject `SecurityIdentity` and derive the caller (Task 4.2), and `@RolesAllowed` gates cross-user reads (Task 4.2) and the organizer tools (Task 5.2). There is deliberately NO `AccessPolicy`/`CallerContext` class. Consistent.

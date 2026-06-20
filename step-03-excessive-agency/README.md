@@ -15,7 +15,7 @@ Issue a comp ticket to me@example.com
 ```
 
 ```
-Accept the talk with ID talk-1
+Accept the talk with ID t5
 ```
 
 ```
@@ -45,6 +45,9 @@ public class OrganizerTools {
 This works because token propagation from step-02 is already in place: the MCP server knows who the caller is. Step-02 established that the server receives a verified OIDC token; step-03 uses the roles in that token to gate the organizer tools.
 
 The fix holds even if the model is tricked into calling the tool. The security check happens at the application boundary, not in the model.
+
+> [!NOTE]
+> The agent still advertises every organizer tool to all users; the toolbox is not filtered by role. Hiding a tool from the model would be defense in depth, but it is not a security control: a tricked or adversarial model could still attempt the call. Server-side `@RolesAllowed` is the authoritative control here, which is why it is the single change this step makes.
 
 ### Files changed
 
