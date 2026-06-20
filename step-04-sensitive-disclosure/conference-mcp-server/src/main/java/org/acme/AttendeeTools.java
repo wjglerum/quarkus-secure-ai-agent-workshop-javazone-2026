@@ -7,6 +7,7 @@ import io.quarkus.security.identity.SecurityIdentity;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import org.acme.audit.Audited;
 import org.acme.model.Attendee;
 import org.acme.model.Session;
 
@@ -14,6 +15,7 @@ import java.util.List;
 import java.util.Optional;
 
 @ApplicationScoped
+@Audited
 public class AttendeeTools {
 
     @Inject

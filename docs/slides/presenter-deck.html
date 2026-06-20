@@ -318,10 +318,10 @@
       <div class="row hit"><span class="id">LLM07</span><span class="name">System Prompt Leakage</span><span class="mod">module 4</span></div>
       <div class="row"><span class="id">LLM08</span><span class="name">Vector &amp; Embedding Weaknesses</span></div>
       <div class="row"><span class="id">LLM09</span><span class="name">Misinformation</span></div>
-      <div class="row"><span class="id">LLM10</span><span class="name">Unbounded Consumption</span></div>
+      <div class="row hit"><span class="id">LLM10</span><span class="name">Unbounded Consumption</span><span class="mod">module 5</span></div>
     </div>
     <div class="cap">Highlighted rows are what you will exploit today. Module 2 adds broken authorization (BOLA), the access-control gap behind agentic attacks.</div>
-    <div class="note">This is the framing slide. Point out we are covering four of the ten directly, plus the access-control issue that underpins agentic abuse. The other six are real but out of scope for two hours.</div>
+    <div class="note">This is the framing slide. Point out we are covering five of the ten directly, plus the access-control issue that underpins agentic abuse. The other five are real but out of scope today.</div>
   </section>
 
   <!-- 8 -->
@@ -417,22 +417,23 @@
         <text x="487" y="195" text-anchor="middle" fill="#4a5a52" font-family="monospace" font-size="11">repeat for the next topic</text>
       </svg>
     </div>
-    <div class="cap">Four topics, roughly 25 minutes each. The fixes are cumulative: each one builds on the last.</div>
-    <div class="note">Watch the clock. If running late, modules 1 and 2 are the must-haves. 3 and 4 build on 2.</div>
+    <div class="cap">Four core topics, roughly 25 minutes each, plus an optional fifth. The fixes are cumulative: each one builds on the last.</div>
+    <div class="note">Watch the clock. If running late, modules 1 and 2 are the must-haves. 3, 4, and 5 build on 2. Module 5 (observability) is the first to drop if time is short.</div>
   </section>
 
   <!-- 12 -->
   <section class="slide">
     <div class="kicker">agenda</div>
-    <h2>Four attacks, four fixes</h2>
+    <h2>Five attacks, five fixes</h2>
     <div class="owasp" style="grid-template-columns:1fr;gap:6px;margin-top:6px">
       <div class="row hit"><span class="id">01</span><span class="name">Indirect prompt injection</span><span class="mod">LLM01</span></div>
-      <div class="row hit"><span class="id">02</span><span class="name">Broken authorization via MCP token propagation</span><span class="mod">BOLA</span></div>
+      <div class="row hit"><span class="id">02</span><span class="name">Broken authorization + audit logging</span><span class="mod">BOLA</span></div>
       <div class="row hit"><span class="id">03</span><span class="name">Excessive agency</span><span class="mod">LLM06</span></div>
       <div class="row hit"><span class="id">04</span><span class="name">Sensitive information disclosure</span><span class="mod">LLM02 · LLM07</span></div>
+      <div class="row hit"><span class="id">05</span><span class="name">Observability + unbounded consumption</span><span class="mod">LLM10</span></div>
     </div>
-    <p class="lead" style="margin-top:16px;max-width:52ch">Module 2 is the hinge. Once identity flows, the role and source-filtering fixes become possible.</p>
-    <div class="note">Set up the dependency now: 2 unlocks 3 and 4. If you only remember one fix, remember token propagation.</div>
+    <p class="lead" style="margin-top:16px;max-width:52ch">Module 2 is the hinge. Once identity flows, the role checks, source filtering, and audit trail all become possible. Module 5 is an optional extension for a longer slot.</p>
+    <div class="note">Set up the dependency now: 2 unlocks 3, 4, and the audit trail. If you only remember one fix, remember token propagation.</div>
   </section>
 
   <!-- 13 -->
@@ -470,7 +471,7 @@
     <h2>Broken auth via token propagation</h2>
     <div class="grid2">
       <div class="card exploit"><span class="label">exploit</span><h3>alice reads bob's profile</h3><p>The agent calls the server with a static service token. The server cannot tell who is really asking. Confused deputy.</p></div>
-      <div class="card defend"><span class="label">defend</span><h3>Propagate the user's token</h3><p>Forward alice's bearer token to the server. It authorizes per token subject. Object-level access is finally enforced.</p></div>
+      <div class="card defend"><span class="label">defend</span><h3>Propagate the user's token</h3><p>Forward alice's bearer token to the server. It authorizes per token subject. Object-level access is finally enforced, and every tool call is now <b class="accent">audit logged</b> by subject (with PII redacted).</p></div>
     </div>
     <div class="diagram">
       <svg viewBox="0 0 980 130" role="img" aria-label="Token propagation before and after">
@@ -520,6 +521,21 @@
     <div class="note">Two layers on purpose. Stop it being retrieved, and catch it on the way out. This is the defense-in-depth lesson made concrete.</div>
   </section>
 
+  <!-- 16b -->
+  <section class="slide">
+    <div class="kicker">module 5 // LLM10</div>
+    <h2>Observability and unbounded consumption</h2>
+    <div class="grid2">
+      <div class="card exploit"><span class="label">exploit</span><h3>Denial of wallet</h3><p>"Repeat the program 100 times" or "loop over every attendee." Nothing is unauthorized; the <b>cost</b> is the attack. One turn fans out into many LLM and tool calls.</p></div>
+      <div class="card defend"><span class="label">defend</span><h3>See it, then cap it</h3><p>A Grafana LGTM stack (OpenTelemetry) makes the token, latency, and call-count spike visible. A consumption rate limit and an output cap stop one request running up unbounded cost.</p></div>
+    </div>
+    <div class="layers" style="margin-top:14px">
+      <div class="layer"><span class="n">1.</span>Observe <small>Grafana OTel LGTM dev service: one trace spans agent, LLM, and MCP tool calls, with metrics and the audit log.</small></div>
+      <div class="layer"><span class="n">2.</span>Cap <small>Per-method <span class="code">@RateLimit</span> gate before the model call, plus a max output-token limit.</small></div>
+    </div>
+    <div class="note">Optional fifth module for a longer slot. The point: you cannot defend what you cannot measure. Show the spike in Grafana, then watch it flatten once the rate limit kicks in.</div>
+  </section>
+
   <!-- 17 -->
   <section class="slide">
     <div class="kicker">the thread</div>
@@ -538,22 +554,24 @@
     <div class="kicker">defense in depth</div>
     <h2>Where each control sits</h2>
     <div class="diagram">
-      <svg viewBox="0 0 980 220" role="img" aria-label="Layered controls">
-        <rect x="30" y="20" width="920" height="180" rx="16" fill="none" stroke="#1d3138"/>
+      <svg viewBox="0 0 980 250" role="img" aria-label="Layered controls">
+        <rect x="30" y="20" width="920" height="200" rx="16" fill="none" stroke="#1d3138"/>
         <text x="50" y="46" fill="#7d9489" font-family="monospace" font-size="12">edge / agent</text>
-        <rect x="60" y="58" width="380" height="120" rx="12" fill="#0a1610" stroke="#2bff88"/>
-        <text x="80" y="86" fill="#69ffae" font-family="monospace" font-size="13" font-weight="700">in the agent</text>
-        <text x="80" y="112" fill="#d7e4dd" font-family="monospace" font-size="12">· input guardrail (LLM01)</text>
-        <text x="80" y="134" fill="#d7e4dd" font-family="monospace" font-size="12">· hardened system prompt</text>
-        <text x="80" y="156" fill="#d7e4dd" font-family="monospace" font-size="12">· output guardrail (LLM02/07)</text>
+        <rect x="60" y="58" width="380" height="146" rx="12" fill="#0a1610" stroke="#2bff88"/>
+        <text x="80" y="84" fill="#69ffae" font-family="monospace" font-size="13" font-weight="700">in the agent</text>
+        <text x="80" y="108" fill="#d7e4dd" font-family="monospace" font-size="12">· input guardrail (LLM01)</text>
+        <text x="80" y="129" fill="#d7e4dd" font-family="monospace" font-size="12">· hardened system prompt</text>
+        <text x="80" y="150" fill="#d7e4dd" font-family="monospace" font-size="12">· output guardrail (LLM02/07)</text>
+        <text x="80" y="171" fill="#d7e4dd" font-family="monospace" font-size="12">· consumption rate limit (LLM10)</text>
 
-        <rect x="540" y="58" width="380" height="120" rx="12" fill="#160a10" stroke="#ff2e88"/>
-        <text x="560" y="86" fill="#ff6bb0" font-family="monospace" font-size="13" font-weight="700">on the MCP server</text>
-        <text x="560" y="112" fill="#d7e4dd" font-family="monospace" font-size="12">· token-based identity (BOLA)</text>
-        <text x="560" y="134" fill="#d7e4dd" font-family="monospace" font-size="12">· object-level authorization</text>
-        <text x="560" y="156" fill="#d7e4dd" font-family="monospace" font-size="12">· role checks (LLM06)</text>
+        <rect x="540" y="58" width="380" height="146" rx="12" fill="#160a10" stroke="#ff2e88"/>
+        <text x="560" y="84" fill="#ff6bb0" font-family="monospace" font-size="13" font-weight="700">on the MCP server</text>
+        <text x="560" y="108" fill="#d7e4dd" font-family="monospace" font-size="12">· token-based identity (BOLA)</text>
+        <text x="560" y="129" fill="#d7e4dd" font-family="monospace" font-size="12">· object-level authorization</text>
+        <text x="560" y="150" fill="#d7e4dd" font-family="monospace" font-size="12">· role checks (LLM06)</text>
+        <text x="560" y="171" fill="#d7e4dd" font-family="monospace" font-size="12">· PII-safe audit logging</text>
 
-        <text x="490" y="206" text-anchor="middle" fill="#4a5a52" font-family="monospace" font-size="11">guardrails slow the attacker · the server is what actually stops them</text>
+        <text x="490" y="232" text-anchor="middle" fill="#4a5a52" font-family="monospace" font-size="11">guardrails and limits slow the attacker · the server is what actually stops them · observability makes it all visible</text>
       </svg>
     </div>
     <div class="note">Use this to summarise: soft controls in the agent, hard controls on the server. No single layer is trusted alone.</div>
@@ -563,8 +581,8 @@
   <section class="slide">
     <div class="kicker">wrap up</div>
     <h1 class="big">Carry identity<br>to the <span class="accent">decision</span>.<span class="cursor"></span></h1>
-    <p class="lead" style="margin-top:20px;max-width:48ch">Reference solutions live in step-01 through step-04. Your workspace is step-00.</p>
-    <div style="margin-top:14px"><span class="tag">Quarkus</span><span class="tag">LangChain4j</span><span class="tag">MCP</span><span class="tag">OIDC</span><span class="tag">Keycloak</span></div>
+    <p class="lead" style="margin-top:20px;max-width:48ch">Reference solutions live in step-01 through step-05. Your workspace is step-00.</p>
+    <div style="margin-top:14px"><span class="tag">Quarkus</span><span class="tag">LangChain4j</span><span class="tag">MCP</span><span class="tag">OIDC</span><span class="tag">Keycloak</span><span class="tag">OpenTelemetry</span><span class="tag">Grafana</span></div>
     <div class="note">Point them at the per-step READMEs for the exploit scripts and fixes. Thank them. Take questions.</div>
   </section>
 
@@ -574,7 +592,7 @@
     <h2>Where to go next</h2>
     <ul>
       <li><b>step-00-your-workspace</b> is the vulnerable app you harden during the session.</li>
-      <li><b>step-01 to step-04</b> are the cumulative reference solutions, one topic each.</li>
+      <li><b>step-01 to step-05</b> are the cumulative reference solutions, one topic each.</li>
       <li>Each step <span class="code">README.md</span> has the exploit script and the fix walkthrough.</li>
       <li>OWASP Top 10 for LLM Applications and the OWASP Agentic AI threats guide for going deeper.</li>
     </ul>

@@ -28,6 +28,7 @@
         <module>step-02-token-propagation</module>
         <module>step-03-excessive-agency</module>
         <module>step-04-sensitive-disclosure</module>
+        <module>step-05-observability</module>
     </modules>
 
     <repositories>

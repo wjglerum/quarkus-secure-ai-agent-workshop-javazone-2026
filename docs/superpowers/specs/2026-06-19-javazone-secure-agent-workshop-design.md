@@ -141,8 +141,10 @@ standalone-buildable cumulative reference.
 ## Out of scope (YAGNI for the 2-hour slot)
 
 - The weather MCP server and IP-lookup tool from the current workshop.
-- Observability / auditing module.
-- Rate limiting.
+- Observability / auditing module. (Now in scope: see
+  [2026-06-20-audit-observability-design.md](2026-06-20-audit-observability-design.md).)
+- Rate limiting. (Now in scope as the LLM10 defense in step-05, see the
+  audit/observability design above.)
 - A dedicated testing module (guardrail tests).
 - A capstone red-team / CTF challenge.
 
