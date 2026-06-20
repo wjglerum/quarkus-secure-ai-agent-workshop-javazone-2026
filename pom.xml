@@ -24,6 +24,7 @@
 
     <modules>
         <module>step-00-your-workspace</module>
+        <module>step-01-prompt-injection</module>
     </modules>
 
     <repositories>
