@@ -37,9 +37,8 @@ The fix has three parts: protect the MCP server with OIDC, propagate the user's 
 The `conference-mcp-server` gains the `quarkus-mcp-server-oidc` extension. The `application.properties` configures it in service mode:
 
 ```properties
+quarkus.http.auth.proactive=false
 quarkus.oidc.application-type=service
-quarkus.oidc.token.audience=conference-mcp
-quarkus.oidc.roles.role-claim-path=realm_access/roles
 quarkus.oidc.resource-metadata.enabled=true
 quarkus.oidc.resource-metadata.scopes=attendee
 quarkus.http.auth.permission.mcp.paths=/mcp,/mcp/*
@@ -47,9 +46,12 @@ quarkus.http.auth.permission.mcp.policy=mcp-scope
 quarkus.http.auth.policy.mcp-scope.roles-allowed=attendee
 ```
 
-The audience check (`conference-mcp`) rejects tokens that were not explicitly minted for this server. The `realm_access/roles` path tells Quarkus where to find role claims in the Keycloak JWT. The resource metadata is used by the MCP discovery so clients know what scopes are required.
+Now an unauthenticated call to `/mcp` is rejected with a `401`, and a call whose token does not carry the `attendee` role is rejected by the `mcp-scope` policy. The server validates the token signature and issuer against the shared Keycloak, so it only trusts tokens minted by the same provider the agent logged in against. The resource metadata drives the MCP authorization challenge so clients know which scope is required.
 
-The Keycloak realm JSON includes an audience mapper that adds `conference-mcp` to the audience of tokens scoped to this server.
+Roles come from the token's `groups` claim, which is the Quarkus default role source. The Keycloak dev service places the roles you assign in config (see below) into that claim, so no `role-claim-path` override is needed.
+
+> [!NOTE]
+> Validating a specific token audience (`quarkus.oidc.token.audience`) is a worthwhile extra hardening that rejects tokens minted for a different service. It needs the token to carry an `aud` claim, which the default Keycloak dev-service token does not (it only sets `azp`). Adding it would require a custom Keycloak audience mapper, so this workshop relies on issuer plus role validation and leaves audience validation as an optional production step.
 
 ### 2. Token propagation from the agent
 
@@ -70,11 +72,10 @@ The model can no longer pass an arbitrary username to look up someone else's pro
 | File | Change |
 | ---- | ------ |
 | `conference-mcp-server/pom.xml` | `quarkus-mcp-server-oidc` dependency added |
-| `conference-mcp-server/src/main/resources/application.properties` | OIDC service mode, audience, roles claim path, resource metadata, MCP scope policy |
+| `conference-mcp-server/src/main/resources/application.properties` | OIDC service mode, resource metadata, MCP scope policy, shared Keycloak dev service with config-based users and roles |
 | `conference-mcp-server/src/main/java/org/acme/AttendeeTools.java` | `SecurityIdentity` injected; `myProfile`/`mySchedule`/`bookSession` drop username param; `lookupAttendee` gets `@RolesAllowed("organizer")` |
 | `conference-assistant/pom.xml` | `quarkus-langchain4j-oidc-mcp-auth-provider` dependency added |
-| `conference-assistant/src/main/resources/application.properties` | Shared Keycloak dev service config; MCP health check disabled for tests |
-| `conference-assistant/src/main/resources/javazone-realm.json` | Audience mapper for `conference-mcp` added to Keycloak realm |
+| `conference-assistant/src/main/resources/application.properties` | Token propagation; shared Keycloak dev service with config-based users and roles; MCP health check disabled for tests |
 
 ---
 
@@ -123,4 +124,4 @@ The test uses `@TestSecurity` to inject identities without a real Keycloak serve
 - `bob` with roles `attendee` and `organizer` can call `lookupAttendee` successfully
 
 > [!NOTE]
-> The live end-to-end flow (real token propagation through Keycloak to the MCP server) requires both dev service containers to start cleanly and share the same Keycloak realm. If you have a stale Keycloak container from a previous run, stop it and let the dev service recreate it so that the realm with the audience mapper is applied.
+> The live end-to-end flow (real token propagation through Keycloak to the MCP server) requires both apps to share the same Keycloak dev service. They do this with `quarkus.keycloak.devservices.shared=true` and a matching `service-name`, and both declare the same users and roles via `quarkus.keycloak.devservices.users.*` / `.roles.*` (alice, carol, dave have `attendee`; bob has `attendee,organizer`). If you have a stale Keycloak container from a previous run, stop it so the dev service recreates it with these users.

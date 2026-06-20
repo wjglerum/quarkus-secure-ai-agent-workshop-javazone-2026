@@ -61,16 +61,16 @@ Open [http://localhost:8080](http://localhost:8080) in your browser. A chat widg
 
 ## Logging in
 
-Quarkus Dev Services starts Keycloak automatically. The realm is pre-seeded with these identities:
+Quarkus Dev Services starts Keycloak automatically in the default `quarkus` realm, with these identities defined in `application.properties` (`quarkus.keycloak.devservices.users.*` / `.roles.*`):
 
-| Username | Password | Role |
-| -------- | -------- | ---- |
+| Username | Password | Roles |
+| -------- | -------- | ----- |
 | alice | alice | attendee |
 | carol | carol | attendee |
 | dave | dave | attendee |
-| bob | bob | organizer |
+| bob | bob | attendee, organizer |
 
-Password is the same as the username in every case.
+Password is the same as the username in every case. Roles are carried in the token's `groups` claim, which Quarkus reads by default.
 
 ## LLM provider
 
