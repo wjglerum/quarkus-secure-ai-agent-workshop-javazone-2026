@@ -26,6 +26,7 @@
         <module>step-00-your-workspace</module>
         <module>step-01-prompt-injection</module>
         <module>step-02-token-propagation</module>
+        <module>step-03-excessive-agency</module>
     </modules>
 
     <repositories>

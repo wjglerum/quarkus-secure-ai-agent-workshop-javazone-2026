@@ -1,0 +1,55 @@
+JavaZone 2026 Conference Program
+
+JavaZone takes place at Oslo Spektrum, Oslo, Norway on September 9-10, 2026.
+Doors open at 08:00. Keynote starts at 09:00 in Hall A.
+Sessions run from 09:30 to 18:00 each day with a lunch break from 12:00 to 13:00.
+
+Sessions:
+
+Title: Building Secure AI Agents with Quarkus
+Speaker: bob
+Room: Hall A
+Time: 09:30 - 10:20, Day 1
+Track: Security
+
+Title: Reactive Microservices in Practice
+Speaker: carol
+Room: Hall B
+Time: 10:40 - 11:30, Day 1
+Track: Architecture
+
+Title: LangChain4j Deep Dive
+Speaker: alice
+Room: Room 1
+Time: 13:00 - 13:50, Day 1
+Track: AI and Machine Learning
+
+Title: JVM Performance Tuning on JDK 25
+Speaker: dave
+Room: Room 2
+Time: 14:10 - 15:00, Day 1
+Track: Performance
+
+Title: Zero-Trust Architecture for Microservices
+Speaker: alice
+Room: Hall A
+Time: 15:20 - 16:10, Day 1
+Track: Security
+
+Venue Information:
+
+Oslo Spektrum is located at Sonja Henies plass 2, 0185 Oslo.
+The venue is a short walk from Oslo Central Station (Oslo S).
+Multiple tram and bus lines stop nearby.
+
+Rooms:
+- Hall A: main stage, capacity 1200
+- Hall B: secondary stage, capacity 600
+- Room 1: workshop and deep-dive room, capacity 150
+- Room 2: workshop and deep-dive room, capacity 150
+
+All rooms have power strips at every seat and strong wifi coverage.
+
+Social Event:
+The JavaZone party takes place on the evening of Day 1 starting at 19:00.
+Location announced in the conference app.
