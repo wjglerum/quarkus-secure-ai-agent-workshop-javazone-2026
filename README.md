@@ -48,10 +48,10 @@ Start the MCP server first, then the agent. Both use Quarkus dev mode, which giv
 
 ```shell
 # Terminal 1 - start the MCP server
-cd step-00-your-workspace/conference-mcp-server && ../../mvnw quarkus:dev
+cd step-00-your-workspace/conference-mcp-server && ./mvnw quarkus:dev
 
 # Terminal 2 - start the agent
-cd step-00-your-workspace/conference-assistant && ../../mvnw quarkus:dev
+cd step-00-your-workspace/conference-assistant && ./mvnw quarkus:dev
 ```
 
 Open [http://localhost:8080](http://localhost:8080) in your browser. A chat widget appears in the bottom-right corner.

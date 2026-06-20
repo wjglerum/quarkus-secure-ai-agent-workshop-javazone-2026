@@ -82,8 +82,8 @@ This tells the model explicitly that retrieved content is data, not commands. It
 Restart the `step-01-prompt-injection` apps (or apply the changes to your workspace and restart):
 
 ```shell
-cd step-01-prompt-injection/conference-mcp-server && ../../mvnw quarkus:dev
-cd step-01-prompt-injection/conference-assistant && ../../mvnw quarkus:dev
+cd step-01-prompt-injection/conference-mcp-server && ./mvnw quarkus:dev
+cd step-01-prompt-injection/conference-assistant && ./mvnw quarkus:dev
 ```
 
 Log in as alice and send the same direct injection attempt:
@@ -102,7 +102,7 @@ The guardrail test does not need a running model or a running server. It instant
 
 ```shell
 # From the step-01 directory
-cd step-01-prompt-injection/conference-assistant && ../../mvnw test -Dtest=PromptInjectionGuardTest
+cd step-01-prompt-injection/conference-assistant && ./mvnw test -Dtest=PromptInjectionGuardTest
 ```
 
 The test verifies:

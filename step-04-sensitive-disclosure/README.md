@@ -87,8 +87,8 @@ The output guardrail is the backstop. Even if the ingestion scope is accidentall
 Start the step-04 apps:
 
 ```shell
-cd step-04-sensitive-disclosure/conference-mcp-server && ../../mvnw quarkus:dev
-cd step-04-sensitive-disclosure/conference-assistant && ../../mvnw quarkus:dev
+cd step-04-sensitive-disclosure/conference-mcp-server && ./mvnw quarkus:dev
+cd step-04-sensitive-disclosure/conference-assistant && ./mvnw quarkus:dev
 ```
 
 Log in as **alice** and ask:
@@ -102,7 +102,7 @@ What are the speaker fees?
 ### Deterministic proof: run the tests
 
 ```shell
-cd step-04-sensitive-disclosure/conference-assistant && ../../mvnw test -Dtest=SensitiveDisclosureGuardTest
+cd step-04-sensitive-disclosure/conference-assistant && ./mvnw test -Dtest=SensitiveDisclosureGuardTest
 ```
 
 The test instantiates `SensitiveDisclosureGuard` directly with a known marker list and verifies:

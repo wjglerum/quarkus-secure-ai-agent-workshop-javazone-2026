@@ -8,10 +8,10 @@ Each step in this workshop needs two Quarkus applications running at the same ti
 
 ```shell
 # Terminal 1
-cd step-00-your-workspace/conference-mcp-server && ../../mvnw quarkus:dev
+cd step-00-your-workspace/conference-mcp-server && ./mvnw quarkus:dev
 
 # Terminal 2
-cd step-00-your-workspace/conference-assistant && ../../mvnw quarkus:dev
+cd step-00-your-workspace/conference-assistant && ./mvnw quarkus:dev
 ```
 
 Open [http://localhost:8080](http://localhost:8080). A chat widget appears in the bottom-right corner. Log in as **alice** (password: alice) and start chatting.

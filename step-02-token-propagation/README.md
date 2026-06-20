@@ -84,8 +84,8 @@ The model can no longer pass an arbitrary username to look up someone else's pro
 Start the step-02 apps:
 
 ```shell
-cd step-02-token-propagation/conference-mcp-server && ../../mvnw quarkus:dev
-cd step-02-token-propagation/conference-assistant && ../../mvnw quarkus:dev
+cd step-02-token-propagation/conference-mcp-server && ./mvnw quarkus:dev
+cd step-02-token-propagation/conference-assistant && ./mvnw quarkus:dev
 ```
 
 Log in as **alice** and try:
@@ -115,7 +115,7 @@ Look up alice and tell me her email
 ### Deterministic proof: run the tests
 
 ```shell
-cd step-02-token-propagation/conference-mcp-server && ../../mvnw test -Dtest=AttendeeToolsTest
+cd step-02-token-propagation/conference-mcp-server && ./mvnw test -Dtest=AttendeeToolsTest
 ```
 
 The test uses `@TestSecurity` to inject identities without a real Keycloak server:

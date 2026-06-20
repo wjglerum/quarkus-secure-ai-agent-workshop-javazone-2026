@@ -62,8 +62,8 @@ The fix holds even if the model is tricked into calling the tool. The security c
 Start the step-03 apps:
 
 ```shell
-cd step-03-excessive-agency/conference-mcp-server && ../../mvnw quarkus:dev
-cd step-03-excessive-agency/conference-assistant && ../../mvnw quarkus:dev
+cd step-03-excessive-agency/conference-mcp-server && ./mvnw quarkus:dev
+cd step-03-excessive-agency/conference-assistant && ./mvnw quarkus:dev
 ```
 
 Log in as **alice** and ask:
@@ -85,7 +85,7 @@ Issue a comp ticket to me@example.com
 ### Deterministic proof: run the tests
 
 ```shell
-cd step-03-excessive-agency/conference-mcp-server && ../../mvnw test -Dtest=OrganizerToolsTest
+cd step-03-excessive-agency/conference-mcp-server && ./mvnw test -Dtest=OrganizerToolsTest
 ```
 
 The test uses `@TestSecurity` to set up identities without a running server:
