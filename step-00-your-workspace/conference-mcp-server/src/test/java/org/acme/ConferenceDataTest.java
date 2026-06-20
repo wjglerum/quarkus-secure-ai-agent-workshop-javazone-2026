@@ -20,7 +20,7 @@ class ConferenceDataTest {
     @Test
     void seedsATalkSubmissionContainingAnInjectionPayload() {
         boolean hasInjection = data.allTalks().stream()
-                .anyMatch(t -> t.abstractText().toLowerCase().contains("ignore"));
+                .anyMatch(t -> t.abstractText.toLowerCase().contains("ignore"));
         assertTrue(hasInjection, "one seeded abstract must carry an injection payload");
     }
 }
