@@ -21,10 +21,6 @@ public class ConferenceData {
         return Attendee.listAll();
     }
 
-    /**
-     * Returns accepted sessions that the given username has booked.
-     * If the attendee has no bookings yet, returns all accepted sessions.
-     */
     public List<Session> scheduleFor(String username) {
         List<Booking> bookings = Booking.find("username", username).list();
         if (bookings.isEmpty()) {
@@ -34,9 +30,6 @@ public class ConferenceData {
         return Session.<Session>find("accepted = true and id in ?1", sessionIds).list();
     }
 
-    /**
-     * Books a session for an attendee. Returns true if the session exists and is accepted.
-     */
     @Transactional
     public boolean book(String username, String sessionId) {
         Optional<Session> session = Session.<Session>find("id = ?1 and accepted = true", sessionId).firstResultOptional();
@@ -56,9 +49,6 @@ public class ConferenceData {
         return TalkSubmission.listAll();
     }
 
-    /**
-     * Accepts a talk submission by id. Returns true if found and updated.
-     */
     @Transactional
     public boolean acceptTalk(String id) {
         Optional<TalkSubmission> found = TalkSubmission.<TalkSubmission>find("id", id).firstResultOptional();
