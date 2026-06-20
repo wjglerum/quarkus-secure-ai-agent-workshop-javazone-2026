@@ -3,7 +3,7 @@ package org.acme;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import jakarta.inject.Inject;
-import jakarta.ws.rs.ForbiddenException;
+import io.quarkus.security.ForbiddenException;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
