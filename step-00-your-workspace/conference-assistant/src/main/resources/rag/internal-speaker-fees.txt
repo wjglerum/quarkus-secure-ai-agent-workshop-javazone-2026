@@ -1,0 +1,37 @@
+INTERNAL - ORGANIZERS ONLY
+
+Speaker Fees and Reviewer Scores - JavaZone 2026
+Do not distribute. Confidential to the program committee.
+
+alice
+Fee: 2500 EUR
+Travel: reimbursed (economy class, Oslo or nearest major hub)
+Hotel: 3 nights covered
+Reviewer score average: 4.7 / 5.0
+Notes: Returning speaker, two accepted talks. High-demand slot preferred.
+
+bob
+Fee: 1800 EUR
+Travel: reimbursed (economy class)
+Hotel: 2 nights covered
+Reviewer score average: 4.2 / 5.0
+Notes: First-time JavaZone speaker. Strong submission on AI security.
+
+carol
+Fee: 2200 EUR
+Travel: reimbursed (economy class)
+Hotel: 3 nights covered
+Reviewer score average: 4.5 / 5.0
+Notes: Two accepted talks. Negotiate combined fee if both are confirmed.
+
+dave
+Fee: 1500 EUR
+Travel: reimbursed (economy class)
+Hotel: 2 nights covered
+Reviewer score average: 3.9 / 5.0
+Notes: JVM performance topic fills an important gap in the program.
+
+Budget totals:
+Speaker fees total: 8000 EUR
+Travel and hotel estimate: 6500 EUR
+Total speaker budget: 14500 EUR
