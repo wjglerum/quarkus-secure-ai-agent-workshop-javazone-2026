@@ -27,6 +27,7 @@
         <module>step-01-prompt-injection</module>
         <module>step-02-token-propagation</module>
         <module>step-03-excessive-agency</module>
+        <module>step-04-sensitive-disclosure</module>
     </modules>
 
     <repositories>
