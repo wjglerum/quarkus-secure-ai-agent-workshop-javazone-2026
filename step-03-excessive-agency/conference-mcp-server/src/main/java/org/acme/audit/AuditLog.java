@@ -9,14 +9,6 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 
-/**
- * Sink for tool-call audit records. Each call is written as a single structured
- * line under the dedicated "audit" logger category and kept in a bounded
- * in-memory buffer for tests and the Dev UI.
- *
- * <p>Logging only becomes meaningful once the caller's token is propagated to the
- * MCP server (step-02): before that the server cannot tell who is asking.
- */
 @ApplicationScoped
 public class AuditLog {
 

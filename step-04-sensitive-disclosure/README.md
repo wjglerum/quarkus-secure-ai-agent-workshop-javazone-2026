@@ -4,7 +4,7 @@ A RAG (Retrieval-Augmented Generation) pipeline is only as safe as the documents
 
 This step also covers a related disclosure path: a user asking the model to repeat its system prompt.
 
-The fix has two layers: remove the internal document from the ingestion path so it can never be retrieved, and add an output guardrail as a backstop that blocks any response containing known internal markers.
+The fix has two layers: role-filter the RAG corpus so the internal document is retrieved only for callers with the `organizer` role, and add an output guardrail as a backstop that blocks any response containing known internal markers.
 
 ---
 
@@ -38,11 +38,11 @@ Depending on the model, it may comply and reveal the system prompt verbatim.
 
 ## Defend - what changed
 
-### Layer 1: remove the internal document from the ingestion path
+### Layer 1: role-filter the RAG corpus
 
-The simplest and most reliable fix for RAG data leakage is to not ingest the sensitive document at all. In step-04 the `rag/` directory is split into `rag/public/` and `rag/internal/`. The public subdirectory contains `program.txt`, `faq.txt`, and `talk-abstracts.txt`. The internal document `internal-speaker-fees.txt` lives in `rag/internal/` and is never ingested.
+The internal document must be unreachable for attendees but still useful to organizers, so the fix filters retrieval by role rather than dropping the document. In step-04 the `rag/` directory is split into `rag/public/` and `rag/internal/`. The public subdirectory contains `program.txt`, `faq.txt`, and `talk-abstracts.txt`. The internal document `internal-speaker-fees.txt` lives in `rag/internal/`.
 
-The easy-rag configuration in `application.properties` is updated to point at the public subdirectory only:
+Easy-rag is pointed at the public subdirectory only, so the public corpus is available to everyone:
 
 ```properties
 # Before (step-03 and earlier):
@@ -52,10 +52,22 @@ quarkus.langchain4j.easy-rag.path=src/main/resources/rag
 quarkus.langchain4j.easy-rag.path=src/main/resources/rag/public
 ```
 
-Because the internal document is not in the vector store, it cannot be retrieved, regardless of what the user asks.
+A custom retrieval augmentor, `rag/RoleFilteredRagAugmentor.java`, ingests `rag/internal/` into a separate embedding store and only queries it when the caller has the `organizer` role. The role decision uses the injected `SecurityIdentity` (`identity.hasRole("organizer")`), the same primitive the MCP server uses for authorization:
+
+```java
+return query -> {
+    List<Content> results = new ArrayList<>(publicRetriever.retrieve(query));
+    if (identity.hasRole("organizer")) {
+        results.addAll(internalRetriever.retrieve(query));
+    }
+    return results;
+};
+```
+
+It is wired into the AI service with `@RegisterAiService(retrievalAugmentor = RoleFilteredRagAugmentor.class)`. An attendee never receives internal chunks from the retriever, while an organizer still can.
 
 > [!NOTE]
-> This means organizers also cannot retrieve the internal document via RAG in this step. A production system that needed role-gated retrieval would add a metadata filter to the retriever so that only tokens with the `organizer` role can access internal chunks. Easy-rag in this version does not support per-request metadata filtering, so the simpler approach of excluding the document entirely is used here. The output guardrail serves as the safety net if the ingestion scope ever widens inadvertently.
+> The role filter keys off the same `organizer` role used to gate the MCP tools, so a single identity decision drives both the data the agent can act on and the documents it can retrieve. The output guardrail below is the backstop: if internal content ever reaches the model through another path, it is still blocked on the way out.
 
 ### Layer 2: output guardrail
 
@@ -76,9 +88,11 @@ The output guardrail is the backstop. Even if the ingestion scope is accidentall
 | File | Change |
 | ---- | ------ |
 | `conference-assistant/src/main/java/org/acme/guardrails/SensitiveDisclosureGuard.java` | New `OutputGuardrail` implementation |
-| `conference-assistant/src/main/java/org/acme/ChatBot.java` | `@OutputGuardrails({SensitiveDisclosureGuard.class})` added |
+| `conference-assistant/src/main/java/org/acme/rag/RoleFilteredRagAugmentor.java` | New role-aware `RetrievalAugmentor`: serves `rag/internal/` only to organizers |
+| `conference-assistant/src/main/java/org/acme/ChatBot.java` | `@OutputGuardrails({SensitiveDisclosureGuard.class})` and `@RegisterAiService(retrievalAugmentor = RoleFilteredRagAugmentor.class)` added |
 | `conference-assistant/src/main/resources/application.properties` | `guardrails.sensitive.markers` property added; easy-rag path changed to `rag/public` |
-| `conference-assistant/src/main/resources/rag/` | Split into `rag/public/` (indexed) and `rag/internal/` (not indexed) |
+| `conference-assistant/src/main/resources/rag/` | Split into `rag/public/` (easy-rag, all roles) and `rag/internal/` (organizer-only via `RoleFilteredRagAugmentor`) |
+| `conference-assistant/pom.xml` | `quarkus-test-security` test dependency added |
 
 ---
 
@@ -91,28 +105,34 @@ cd step-04-sensitive-disclosure/conference-mcp-server && ./mvnw quarkus:dev
 cd step-04-sensitive-disclosure/conference-assistant && ./mvnw quarkus:dev
 ```
 
-Log in as **alice** and ask:
+Log in as **alice** (an attendee) and ask:
 
 ```
 What are the speaker fees?
 ```
 
-**What you should see:** the agent has no information about speaker fees to retrieve (the document is not indexed), so it should say it does not have that information. If the model somehow produces a response containing a marker like `Fee:` or `INTERNAL - ORGANIZERS ONLY`, the output guardrail intercepts it and the response is blocked.
+**What you should see:** the role filter excludes the internal document from alice's retrieval, so the agent has no fees content to work with and should say it does not have that information. If the model somehow produces a response containing a marker like `Fee:` or `INTERNAL - ORGANIZERS ONLY`, the output guardrail intercepts it and the response is blocked.
+
+Now log in as **bob** (an organizer) and ask the same question. The role filter includes the internal document for organizers, so bob does receive the fees and reviewer scores. This is the point of role-filtered retrieval: the same data that leaks to attendees in the exploit is still available to the people who are allowed to see it.
 
 ### Deterministic proof: run the tests
 
 ```shell
-cd step-04-sensitive-disclosure/conference-assistant && ./mvnw test -Dtest=SensitiveDisclosureGuardTest
+cd step-04-sensitive-disclosure/conference-assistant && ./mvnw test -Dtest=SensitiveDisclosureGuardTest,RoleFilteredRagAugmentorTest
 ```
 
-The test instantiates `SensitiveDisclosureGuard` directly with a known marker list and verifies:
+`SensitiveDisclosureGuardTest` instantiates `SensitiveDisclosureGuard` directly with a known marker list and verifies:
 - A normal answer about the conference schedule passes through
 - A response containing `INTERNAL - ORGANIZERS ONLY` is blocked
 - A response containing `Fee:` is blocked
 - A response containing `Reviewer score average:` is blocked
 - Detection is case-insensitive
 
-All tests are deterministic - no model, no running server required.
+`RoleFilteredRagAugmentorTest` uses `@TestSecurity` to verify the role filter:
+- An attendee (`alice`) does not retrieve the internal fees document
+- An organizer (`bob`) does retrieve it
+
+Both tests are deterministic - no model is invoked.
 
 ---
 
@@ -125,7 +145,7 @@ After all four steps your agent has multiple independent security layers:
 3. **OIDC token propagation** - the MCP server knows who is calling; caller identity comes from the token, not from model output
 4. **Object-level authorization** - `myProfile` and `mySchedule` are locked to the authenticated user; `lookupAttendee` requires the `organizer` role
 5. **Excessive agency prevention** - all organizer tools are gated by `@RolesAllowed("organizer")`
-6. **Scoped RAG corpus** - internal documents are not ingested
+6. **Role-filtered RAG** - the internal document is retrieved only for callers with the `organizer` role
 7. **Output guardrail** - blocks responses containing internal content markers
 
 No single layer is a complete solution on its own. Together they make the agent substantially harder to abuse.

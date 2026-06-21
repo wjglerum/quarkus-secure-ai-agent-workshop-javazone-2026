@@ -72,8 +72,11 @@ propagates the caller's token.**
 
 ### Data
 
-Seeded in memory in both apps (no database to provision). A small, fixed set of
-attendees, sessions, talk submissions, and the internal speaker-fees document.
+Conference data (attendees, sessions, talk submissions) lives in the MCP server
+in a Postgres database via Hibernate ORM with Panache, seeded on startup by
+`import.sql`. A Quarkus dev service starts the Postgres container automatically,
+so there is nothing to provision by hand. The internal speaker-fees document is
+not in the database: it belongs to the agent's RAG corpus.
 
 ## The four modules (each: exploit → defend)
 

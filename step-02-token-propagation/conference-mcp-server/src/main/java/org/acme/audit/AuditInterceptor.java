@@ -13,19 +13,6 @@ import java.lang.reflect.Parameter;
 import java.util.Set;
 import java.util.StringJoiner;
 
-/**
- * Records an audit line for every {@link Audited} tool invocation.
- *
- * <p>Priority is set below the Quarkus {@code @RolesAllowed} interceptor (which
- * runs at 150), so this interceptor is the outermost wrapper. That lets it
- * observe a {@link ForbiddenException} thrown by the authorization check and
- * record it as a {@code DENY}, then rethrow it unchanged.
- *
- * <p>Arguments are logged with PII redacted: any parameter named {@code email}
- * or {@code name} is masked, so naive auditing does not re-leak the very data the
- * later steps protect. This relies on the {@code -parameters} compiler flag,
- * which is already enabled, to read real parameter names.
- */
 @Audited
 @Interceptor
 @Priority(Interceptor.Priority.PLATFORM_BEFORE - 100)

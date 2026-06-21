@@ -9,9 +9,10 @@ import io.quarkiverse.langchain4j.mcp.runtime.McpToolBox;
 import jakarta.enterprise.context.SessionScoped;
 import org.acme.guardrails.PromptInjectionGuard;
 import org.acme.guardrails.SensitiveDisclosureGuard;
+import org.acme.rag.RoleFilteredRagAugmentor;
 
 @SessionScoped
-@RegisterAiService
+@RegisterAiService(retrievalAugmentor = RoleFilteredRagAugmentor.class)
 public interface ChatBot {
 
     @SystemMessage("""

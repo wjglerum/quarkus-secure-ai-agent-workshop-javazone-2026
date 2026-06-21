@@ -16,8 +16,6 @@ class ConsumptionGuardTest {
 
     @Test
     void exceedingTheRateLimitThrows() {
-        // The guard allows 5 calls per 10-second window; these all happen within
-        // microseconds of each other, so the 6th must be rejected.
         for (int i = 0; i < 5; i++) {
             assertDoesNotThrow(guard::enforce, "call " + (i + 1) + " should be allowed");
         }

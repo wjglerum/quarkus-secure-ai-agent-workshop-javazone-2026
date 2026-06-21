@@ -155,7 +155,7 @@ them working:
 4. **Object-level authorization** - you can only reach your own records
 5. **Excessive agency prevention** - organizer tools are role gated
 6. **Audit logging** - every tool call is attributed to a real subject, with PII redacted
-7. **Scoped RAG corpus** - internal documents are not ingested
+7. **Role-filtered RAG** - the internal document is retrieved only for callers with the `organizer` role
 8. **Output guardrail** - responses containing internal markers are blocked
 9. **Consumption rate limit and output cap** - one request cannot run up unbounded cost
 10. **Observability** - traces, metrics, and logs make every one of the above visible

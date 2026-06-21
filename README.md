@@ -5,7 +5,7 @@ In this workshop you get a **complete conference assistant** that already works 
 The topics follow the OWASP Top 10 for LLM Applications:
 
 - **Prompt Injection** (LLM01) - an over-trusting system prompt and no input guardrail
-- **Broken Object-Level Authorization** (LLM01 / BOLA) - an unauthenticated MCP server with a confused-deputy flaw; the fix also adds PII-safe audit logging once the caller's token is propagated
+- **Broken Object-Level Authorization** (BOLA) - an unauthenticated MCP server with a confused-deputy flaw; the fix also adds PII-safe audit logging once the caller's token is propagated
 - **Excessive Agency** (LLM06) - privileged organizer tools accessible by any authenticated user
 - **Sensitive Information Disclosure** (LLM02) - internal documents in the RAG corpus with no output guardrail
 - **Unbounded Consumption** (LLM10) - no ceiling on the work one request can trigger, observed with a Grafana LGTM stack and capped with a rate limit
@@ -104,9 +104,9 @@ Work through the modules in order. `step-00-your-workspace` is your personal wor
 | ---- | ----- | --------- | ------------ |
 | [step-00-your-workspace](./step-00-your-workspace/README.md) | Your workspace - start here | n/a | Explore the vulnerable app |
 | [step-01-prompt-injection](./step-01-prompt-injection/README.md) | Prompt injection defense | LLM01 | Input guardrail + hardened system prompt |
-| [step-02-token-propagation](./step-02-token-propagation/README.md) | Token propagation, object-level auth, audit logging | LLM01 / BOLA | OIDC on MCP server, token forwarding, identity-derived access, PII-safe audit log |
+| [step-02-token-propagation](./step-02-token-propagation/README.md) | Token propagation, object-level auth, audit logging | BOLA | OIDC on MCP server, token forwarding, identity-derived access, PII-safe audit log |
 | [step-03-excessive-agency](./step-03-excessive-agency/README.md) | Excessive agency | LLM06 | Role-gated organizer tools |
-| [step-04-sensitive-disclosure](./step-04-sensitive-disclosure/README.md) | Sensitive information disclosure | LLM02 | Output guardrail + scoped RAG corpus |
+| [step-04-sensitive-disclosure](./step-04-sensitive-disclosure/README.md) | Sensitive information disclosure | LLM02 | Output guardrail + role-filtered RAG |
 | [step-05-observability](./step-05-observability/README.md) | Observability + unbounded consumption | LLM10 | Grafana LGTM + OpenTelemetry, consumption rate limit + output cap |
 
 > [!TIP]

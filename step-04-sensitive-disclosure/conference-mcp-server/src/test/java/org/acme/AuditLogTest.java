@@ -44,7 +44,6 @@ class AuditLogTest {
         assertEquals("alice", entry.subject());
         assertEquals("DENY", entry.decision());
         assertEquals("forbidden", entry.outcome());
-        // PII trap: the raw lookup target must never reach the audit log.
         assertFalse(entry.args().contains("carol"), "name argument should be redacted");
         assertTrue(entry.args().contains("c***"), "redacted name should be present");
     }
