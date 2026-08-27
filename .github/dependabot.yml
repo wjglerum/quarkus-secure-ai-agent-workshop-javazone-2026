@@ -1,5 +1,9 @@
 version: 2
 
+# Dependabot only reads this file from the default branch, so every bump lands on
+# main. That is deliberate: adding a target-branch entry per step branch would
+# open five parallel pull request streams per bump and bury the five reference
+# pull requests. Carry a bump down the chain with scripts/restack.sh instead.
 updates:
   - package-ecosystem: "github-actions"
     directory: "/"
@@ -8,6 +12,7 @@ updates:
     commit-message:
       prefix: "chore(ci)"
 
+  # Resolves the root aggregator and both application modules.
   - package-ecosystem: "maven"
     directory: "/"
     schedule:

@@ -1,5 +1,12 @@
 # JavaZone Secure AI Agent Workshop Implementation Plan
 
+> [!NOTE]
+> Historical design record, written while the workshop was laid out as
+> `step-00-your-workspace` through `step-05-observability` directories on
+> `main`. The workshop is now one branch per step, with the baseline at the
+> repository root. Directory paths below are kept as written; see the root
+> `README.md` for the current layout.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build a fresh repository containing a complete, deliberately vulnerable JavaZone Conference Assistant (a Quarkus + LangChain4j agent plus an MCP server) and four cumulative reference solutions that harden it, for a 2-hour exploit-then-defend security workshop.

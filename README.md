@@ -1,6 +1,6 @@
 # Securing AI Agents with Quarkus and LangChain4j
 
-In this workshop you get a **complete conference assistant** that already works end to end. The catch: it is deliberately insecure. Your job is to attack it, understand why each vulnerability exists, and then apply the fixes. The pattern repeats once per module, one security topic at a time. The first four modules are the roughly two hour core; the fifth (observability) is an optional extension for a longer slot.
+In this workshop you get a **complete conference assistant** that already works end to end. The catch: it is deliberately insecure. Your job is to attack it, understand why each vulnerability exists, and then apply the fixes. The pattern repeats once per step, one security topic at a time. The first four steps are the roughly two hour core; the fifth (observability) is an optional extension for a longer slot.
 
 The topics follow the OWASP Top 10 for LLM Applications:
 
@@ -10,7 +10,22 @@ The topics follow the OWASP Top 10 for LLM Applications:
 - **Sensitive Information Disclosure** (LLM02) - internal documents in the RAG corpus with no output guardrail
 - **Unbounded Consumption** (LLM10) - no ceiling on the work one request can trigger, observed with a Grafana LGTM stack and capped with a rate limit
 
-Each step is a self-contained reference solution that layers one fix on top of the previous one. You harden your own copy (step-00) by reading the numbered steps and applying the changes there. If you get stuck you can always diff your workspace against the reference.
+## How the repository is laid out
+
+**`main` is the vulnerable app, and it is your workspace.** The two applications sit at the repository root. You clone, you run, you attack, and you apply every hardening change right here.
+
+**Each step is a branch, and each branch is a pull request.** The five reference solutions live on branches chained one after another, so the pull request for a step contains *only* that step's security fix. Nothing cumulative, nothing to scroll past. That diff is the lesson.
+
+```
+main                                  the vulnerable baseline, your workspace
+ └─ step-01-prompt-injection          + input guardrail, hardened system prompt
+     └─ step-02-token-propagation     + OIDC on MCP, token forwarding, audit log
+         └─ step-03-excessive-agency  + role-gated organizer tools
+             └─ step-04-sensitive-disclosure   + output guardrail, role-filtered RAG
+                 └─ step-05-observability      + OpenTelemetry, consumption limit
+```
+
+The pull requests are permanent teaching artifacts and are never merged. They carry the `reference/do-not-merge` label.
 
 ## Prerequisites
 
@@ -24,7 +39,7 @@ Make sure you have the following installed locally:
 
 ### Initial setup
 
-Clone the repository and warm the dependency cache for all modules. This is slow the first time because Maven downloads the Quarkus BOM and all extensions:
+Clone the repository and warm the dependency cache. This is slow the first time because Maven downloads the Quarkus BOM and all extensions:
 
 ```shell
 ./mvnw install -DskipTests
@@ -38,27 +53,30 @@ ollama pull qwen3.5:0.8b
 
 ## Two applications, two ports
 
-Each step directory contains **two** Quarkus applications that must run at the same time:
+The workshop needs **two** Quarkus applications running at the same time:
 
 | App | Port | What it does |
 | --- | ---- | ------------ |
 | `conference-assistant` | 8080 | The AI agent. WebSocket chat UI at `http://localhost:8080`. OIDC-protected, RAG-enabled. |
 | `conference-mcp-server` | 8081 | Exposes conference data tools over MCP. From step-02 onward it is OIDC-protected. |
 
-Start the MCP server first, then the agent. Both use Quarkus dev mode, which gives you hot reload, continuous testing, and the Dev UI at `/q/dev-ui`:
+Start the MCP server first so its Postgres and Keycloak dev service containers are up before the agent tries to connect. Both use Quarkus dev mode, which gives you hot reload, continuous testing, and the Dev UI at `/q/dev-ui`:
 
 ```shell
 # Terminal 1 - start the MCP server
-cd step-00-your-workspace/conference-mcp-server && ./mvnw quarkus:dev
+cd conference-mcp-server && ./mvnw quarkus:dev
 
 # Terminal 2 - start the agent
-cd step-00-your-workspace/conference-assistant && ./mvnw quarkus:dev
+cd conference-assistant && ./mvnw quarkus:dev
 ```
 
-Open [http://localhost:8080](http://localhost:8080) in your browser. A chat widget appears in the bottom-right corner.
+Open [http://localhost:8080](http://localhost:8080) in your browser. A chat widget appears in the bottom-right corner. Log in as **alice** (password: alice) and start chatting.
 
 > [!NOTE]
 > From step-02 onward both apps share a Keycloak dev service container. Start the MCP server first so Keycloak is already running when the agent starts.
+
+> [!NOTE]
+> The first Ollama model download (`qwen3.5:0.8b`, about 1 GB) is the slow gate. Let it finish before you expect responses from the chat.
 
 ## Logging in
 
@@ -73,11 +91,30 @@ Quarkus Dev Services starts Keycloak automatically in the default `quarkus` real
 
 Password is the same as the username in every case. Roles are carried in the token's `groups` claim, which Quarkus reads by default.
 
+## What the assistant can do
+
+The conference assistant is a fully working AI agent backed by tools and a RAG corpus:
+
+- **Schedule**: ask about your personal conference schedule, or book a session by ID.
+- **Profile**: ask for your attendee profile (ticket tier, dietary preferences, email).
+- **Talks**: ask about talk submissions, the program, or abstracts retrieved from the RAG corpus.
+- **Tickets**: ask the agent to issue a complimentary ticket (an organizer action).
+- **Program and FAQ**: the agent answers free-text questions from the indexed RAG documents: `program.txt`, `faq.txt`, `talk-abstracts.txt`, and `internal-speaker-fees.txt`.
+
+Try a few things as alice to get a feel for it:
+
+```
+What is my schedule?
+Show me my profile.
+What talks are there about AI?
+What are the speaker fees?
+```
+
 ## LLM provider
 
 The default provider is **Ollama** with model `qwen3.5:0.8b`. This is a small (~1 GB), fast model that supports native tool calling, which the MCP tools in this workshop require.
 
-To switch to a cloud provider, open `application.properties` in the `conference-assistant` for the step you are running, uncomment the block for your provider, and export the matching API key:
+To switch to a cloud provider, open `conference-assistant/src/main/resources/application.properties`, uncomment the block for your provider, comment out the Ollama block, and export the matching API key:
 
 ```shell
 # OpenAI
@@ -94,23 +131,80 @@ export ANTHROPIC_API_KEY=<your-key>
 > Small local models vary in how reliably they follow tool-calling instructions. If a model ignores a tool call or hallucinates a result, try again or switch to a larger model. The deterministic guardrail and authorization **tests** are the definitive proof that the security fixes work regardless of model behavior.
 
 > [!WARNING]
-> Keep API keys out of source control. You are responsible for any charges.
+> Keep API keys out of source control. You are responsible for any charges. Do not commit a provider switch to `main`.
+
+### Slow model? Adjust the timeout
+
+Local models can be slow. Both apps already set a generous timeout:
+
+```properties
+quarkus.langchain4j.timeout=1m
+quarkus.langchain4j.ollama.timeout=1m
+```
+
+Raise it (for example `2m`) if a minute is not enough for your hardware.
 
 ## The path
 
-Work through the modules in order. `step-00-your-workspace` is your personal workspace: you run the app there and apply all your hardening changes there. The numbered steps are cumulative reference solutions - each one is the full working solution up to and including that security fix.
+Work through the steps in order. You stay on `main` the whole time: read the step's guide, exploit the vulnerability in your own running app, then apply the fix. The branch and its pull request are there when you want to check your work.
 
-| Step | Topic | OWASP LLM | Instructions |
-| ---- | ----- | --------- | ------------ |
-| [step-00-your-workspace](./step-00-your-workspace/README.md) | Your workspace - start here | n/a | Explore the vulnerable app |
-| [step-01-prompt-injection](./step-01-prompt-injection/README.md) | Prompt injection defense | LLM01 | Input guardrail + hardened system prompt |
-| [step-02-token-propagation](./step-02-token-propagation/README.md) | Token propagation, object-level auth, audit logging | BOLA | OIDC on MCP server, token forwarding, identity-derived access, PII-safe audit log |
-| [step-03-excessive-agency](./step-03-excessive-agency/README.md) | Excessive agency | LLM06 | Role-gated organizer tools |
-| [step-04-sensitive-disclosure](./step-04-sensitive-disclosure/README.md) | Sensitive information disclosure | LLM02 | Output guardrail + role-filtered RAG |
-| [step-05-observability](./step-05-observability/README.md) | Observability + unbounded consumption | LLM10 | Grafana LGTM + OpenTelemetry, consumption rate limit + output cap |
+| Step | Topic | OWASP LLM | Guide | Branch |
+| ---- | ----- | --------- | ----- | ------ |
+| 1 | Prompt injection defense | LLM01 | [step-01.md](./docs/steps/step-01.md) | `step-01-prompt-injection` |
+| 2 | Token propagation, object-level auth, audit logging | BOLA | [step-02.md](./docs/steps/step-02.md) | `step-02-token-propagation` |
+| 3 | Excessive agency | LLM06 | [step-03.md](./docs/steps/step-03.md) | `step-03-excessive-agency` |
+| 4 | Sensitive information disclosure | LLM02 | [step-04.md](./docs/steps/step-04.md) | `step-04-sensitive-disclosure` |
+| 5 | Observability and unbounded consumption | LLM10 | [step-05.md](./docs/steps/step-05.md) | `step-05-observability` |
+
+Each guide opens with a link to its pull request, where the diff shows the fix and nothing else.
 
 > [!TIP]
 > Exploit outcomes depend on the model and its mood. Do not be surprised if a smaller model refuses the attack spontaneously, or if a larger one needs more coaxing. What matters for correctness is the test suite: the guardrail and authorization tests run deterministically and prove the fix holds regardless of model behavior.
+
+## Working with the step branches
+
+### See what a step changed
+
+Every step is one commit on top of the previous step, so a plain diff is the whole answer:
+
+```shell
+# what step-01 adds to the baseline
+git diff main..step-01-prompt-injection
+
+# what step-03 adds on top of step-02
+git diff step-02-token-propagation..step-03-excessive-agency
+
+# just the file list
+git diff --stat step-02-token-propagation..step-03-excessive-agency
+```
+
+### Compare your own work against a reference
+
+You are working on `main`, so once you have applied the step-01 fix yourself:
+
+```shell
+git diff step-01-prompt-injection
+```
+
+Anything that shows up is a difference between your solution and the reference. Some of it will be your own style, and that is fine.
+
+### Run a reference step alongside your own work
+
+Use a git worktree. It gives you a second checkout on disk without stashing, switching branches, or cloning again:
+
+```shell
+git worktree add ../ref-step-01 step-01-prompt-injection
+cd ../ref-step-01/conference-mcp-server && ./mvnw quarkus:dev
+```
+
+When you are done:
+
+```shell
+git worktree remove ../ref-step-01
+```
+
+> [!IMPORTANT]
+> The reference and your own copy both bind ports 8080 and 8081 and both want the same dev-service containers, so they cannot run at the same time. Stop your apps before starting the reference, or override `quarkus.http.port` in one of them.
 
 ## Further reading
 

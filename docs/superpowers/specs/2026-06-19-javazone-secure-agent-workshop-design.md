@@ -1,5 +1,12 @@
 # JavaZone Secure AI Agent Workshop - Design
 
+> [!NOTE]
+> Historical design record, written while the workshop was laid out as
+> `step-00-your-workspace` through `step-05-observability` directories on
+> `main`. The workshop is now one branch per step, with the baseline at the
+> repository root. Directory paths below are kept as written; see the root
+> `README.md` for the current layout.
+
 **Date:** 2026-06-19
 **Status:** Approved (design), pending implementation plan
 

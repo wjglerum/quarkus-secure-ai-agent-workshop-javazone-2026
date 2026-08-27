@@ -4,34 +4,35 @@ on:
   push:
     branches:
       - main
+      - 'step-**'
   pull_request:
+    # The step branches are chained, so a step's pull request is based on the
+    # previous step, not on main. Both bases have to be listed or only PR #1
+    # would ever get a build.
     branches:
       - main
+      - 'step-**'
+  schedule:
+    # Monday 04:17 UTC. Catches drift across the whole chain even in weeks when
+    # nobody pushes.
+    - cron: '17 4 * * 1'
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  # The branch that was actually pushed, or the head of the pull request.
   build:
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
     runs-on: ubuntu-latest
-    name: Build ${{ matrix.step }}
+    name: Build ${{ github.ref_name }}
     permissions:
       contents: read
-    strategy:
-      fail-fast: false
-      matrix:
-        step:
-          - step-00-your-workspace
-          - step-01-prompt-injection
-          - step-02-token-propagation
-          - step-03-excessive-agency
-          - step-04-sensitive-disclosure
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
-        with:
-          sparse-checkout: '${{ matrix.step }}'
       - name: Setup Java
         uses: actions/setup-java@v5
         with:
@@ -39,5 +40,39 @@ jobs:
           distribution: temurin
           cache: maven
       - name: Maven build
-        working-directory: ${{ matrix.step }}
+        run: ./mvnw -B verify
+
+  # The whole chain in one board. Proves every reference step still builds after
+  # a restack, which a per-branch push build cannot show on its own.
+  chain:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    name: Build ${{ matrix.branch }}
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        branch:
+          - main
+          - step-01-prompt-injection
+          - step-02-token-propagation
+          - step-03-excessive-agency
+          - step-04-sensitive-disclosure
+          # step-05 pulls the Grafana LGTM dev service, but its tests set
+          # %test.quarkus.observability.enabled=false, so it builds on CI like
+          # any other branch.
+          - step-05-observability
+    steps:
+      - name: Checkout ${{ matrix.branch }}
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ matrix.branch }}
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          java-version: 25
+          distribution: temurin
+          cache: maven
+      - name: Maven build
         run: ./mvnw -B verify
