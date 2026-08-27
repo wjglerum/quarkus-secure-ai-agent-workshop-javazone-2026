@@ -1,6 +1,6 @@
 # Step 01 - Prompt Injection (OWASP LLM01)
 
-> **Branch** `step-01-prompt-injection` · **Base** `main` · [Read the diff](https://github.com/wjglerum/quarkus-secure-ai-agent-workshop-javazone-2026/compare/main...step-01-prompt-injection) <!--PR-LINK-->
+> **Branch** `step-01-prompt-injection` · **Base** `main` · [Read the diff](https://github.com/wjglerum/quarkus-secure-ai-agent-workshop-javazone-2026/compare/main...step-01-prompt-injection) · [Pull request #4](https://github.com/wjglerum/quarkus-secure-ai-agent-workshop-javazone-2026/pull/4)
 >
 > This step's code lives on its own branch. Nothing here is a directory you can
 > `cd` into from `main`. To run the reference alongside your own work:

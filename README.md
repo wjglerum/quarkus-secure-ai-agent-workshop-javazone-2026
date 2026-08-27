@@ -148,13 +148,13 @@ Raise it (for example `2m`) if a minute is not enough for your hardware.
 
 Work through the steps in order. You stay on `main` the whole time: read the step's guide, exploit the vulnerability in your own running app, then apply the fix. The branch and its pull request are there when you want to check your work.
 
-| Step | Topic | OWASP LLM | Guide | Branch |
-| ---- | ----- | --------- | ----- | ------ |
-| 1 | Prompt injection defense | LLM01 | [step-01.md](./docs/steps/step-01.md) | `step-01-prompt-injection` |
-| 2 | Token propagation, object-level auth, audit logging | BOLA | [step-02.md](./docs/steps/step-02.md) | `step-02-token-propagation` |
-| 3 | Excessive agency | LLM06 | [step-03.md](./docs/steps/step-03.md) | `step-03-excessive-agency` |
-| 4 | Sensitive information disclosure | LLM02 | [step-04.md](./docs/steps/step-04.md) | `step-04-sensitive-disclosure` |
-| 5 | Observability and unbounded consumption | LLM10 | [step-05.md](./docs/steps/step-05.md) | `step-05-observability` |
+| Step | Topic | OWASP LLM | Guide | Branch | Diff |
+| ---- | ----- | --------- | ----- | ------ | ---- |
+| 1 | Prompt injection defense | LLM01 | [step-01.md](./docs/steps/step-01.md) | `step-01-prompt-injection` | [#4](https://github.com/wjglerum/quarkus-secure-ai-agent-workshop-javazone-2026/pull/4) |
+| 2 | Token propagation, object-level auth, audit logging | BOLA | [step-02.md](./docs/steps/step-02.md) | `step-02-token-propagation` | [#5](https://github.com/wjglerum/quarkus-secure-ai-agent-workshop-javazone-2026/pull/5) |
+| 3 | Excessive agency | LLM06 | [step-03.md](./docs/steps/step-03.md) | `step-03-excessive-agency` | [#6](https://github.com/wjglerum/quarkus-secure-ai-agent-workshop-javazone-2026/pull/6) |
+| 4 | Sensitive information disclosure | LLM02 | [step-04.md](./docs/steps/step-04.md) | `step-04-sensitive-disclosure` | [#7](https://github.com/wjglerum/quarkus-secure-ai-agent-workshop-javazone-2026/pull/7) |
+| 5 | Observability and unbounded consumption | LLM10 | [step-05.md](./docs/steps/step-05.md) | `step-05-observability` | [#8](https://github.com/wjglerum/quarkus-secure-ai-agent-workshop-javazone-2026/pull/8) |
 
 Each guide opens with a link to its pull request, where the diff shows the fix and nothing else.
 

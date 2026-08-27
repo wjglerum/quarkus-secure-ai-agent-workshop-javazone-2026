@@ -1,6 +1,6 @@
 # Step 02 - Token Propagation and Object-Level Authorization (BOLA / Confused Deputy)
 
-> **Branch** `step-02-token-propagation` · **Base** `step-01-prompt-injection` · [Read the diff](https://github.com/wjglerum/quarkus-secure-ai-agent-workshop-javazone-2026/compare/step-01-prompt-injection...step-02-token-propagation) <!--PR-LINK-->
+> **Branch** `step-02-token-propagation` · **Base** `step-01-prompt-injection` · [Read the diff](https://github.com/wjglerum/quarkus-secure-ai-agent-workshop-javazone-2026/compare/step-01-prompt-injection...step-02-token-propagation) · [Pull request #5](https://github.com/wjglerum/quarkus-secure-ai-agent-workshop-javazone-2026/pull/5)
 >
 > This step's code lives on its own branch. Nothing here is a directory you can
 > `cd` into from `main`. To run the reference alongside your own work:

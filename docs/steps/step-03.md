@@ -1,6 +1,6 @@
 # Step 03 - Excessive Agency (OWASP LLM06)
 
-> **Branch** `step-03-excessive-agency` · **Base** `step-02-token-propagation` · [Read the diff](https://github.com/wjglerum/quarkus-secure-ai-agent-workshop-javazone-2026/compare/step-02-token-propagation...step-03-excessive-agency) <!--PR-LINK-->
+> **Branch** `step-03-excessive-agency` · **Base** `step-02-token-propagation` · [Read the diff](https://github.com/wjglerum/quarkus-secure-ai-agent-workshop-javazone-2026/compare/step-02-token-propagation...step-03-excessive-agency) · [Pull request #6](https://github.com/wjglerum/quarkus-secure-ai-agent-workshop-javazone-2026/pull/6)
 >
 > This step's code lives on its own branch. Nothing here is a directory you can
 > `cd` into from `main`. To run the reference alongside your own work:

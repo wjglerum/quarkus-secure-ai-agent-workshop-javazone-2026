@@ -1,6 +1,6 @@
 # Step 04 - Sensitive Information Disclosure (OWASP LLM02)
 
-> **Branch** `step-04-sensitive-disclosure` · **Base** `step-03-excessive-agency` · [Read the diff](https://github.com/wjglerum/quarkus-secure-ai-agent-workshop-javazone-2026/compare/step-03-excessive-agency...step-04-sensitive-disclosure) <!--PR-LINK-->
+> **Branch** `step-04-sensitive-disclosure` · **Base** `step-03-excessive-agency` · [Read the diff](https://github.com/wjglerum/quarkus-secure-ai-agent-workshop-javazone-2026/compare/step-03-excessive-agency...step-04-sensitive-disclosure) · [Pull request #7](https://github.com/wjglerum/quarkus-secure-ai-agent-workshop-javazone-2026/pull/7)
 >
 > This step's code lives on its own branch. Nothing here is a directory you can
 > `cd` into from `main`. To run the reference alongside your own work:

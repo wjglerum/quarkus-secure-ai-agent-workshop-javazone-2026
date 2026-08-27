@@ -1,6 +1,6 @@
 # Step 05 - Observability and Unbounded Consumption (OWASP LLM10)
 
-> **Branch** `step-05-observability` · **Base** `step-04-sensitive-disclosure` · [Read the diff](https://github.com/wjglerum/quarkus-secure-ai-agent-workshop-javazone-2026/compare/step-04-sensitive-disclosure...step-05-observability) <!--PR-LINK-->
+> **Branch** `step-05-observability` · **Base** `step-04-sensitive-disclosure` · [Read the diff](https://github.com/wjglerum/quarkus-secure-ai-agent-workshop-javazone-2026/compare/step-04-sensitive-disclosure...step-05-observability) · [Pull request #8](https://github.com/wjglerum/quarkus-secure-ai-agent-workshop-javazone-2026/pull/8)
 >
 > This step's code lives on its own branch. Nothing here is a directory you can
 > `cd` into from `main`. To run the reference alongside your own work:
