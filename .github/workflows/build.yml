@@ -2,13 +2,15 @@ name: Build
 
 on:
   push:
+    # main only. Every step branch permanently has a reference pull request, so a
+    # push to one already produces a pull_request build; listing step-** here as
+    # well would build each branch twice for the same commit.
     branches:
       - main
-      - 'step-**'
   pull_request:
     # The step branches are chained, so a step's pull request is based on the
-    # previous step, not on main. Both bases have to be listed or only PR #1
-    # would ever get a build.
+    # previous step, not on main. Both bases have to be listed or only the first
+    # step's pull request would ever get a build.
     branches:
       - main
       - 'step-**'
@@ -27,7 +29,7 @@ jobs:
   build:
     if: github.event_name == 'push' || github.event_name == 'pull_request'
     runs-on: ubuntu-latest
-    name: Build ${{ github.ref_name }}
+    name: Build ${{ github.head_ref || github.ref_name }}
     permissions:
       contents: read
     steps:
