@@ -3,8 +3,11 @@ package org.acme;
 import io.quarkiverse.mcp.server.TextContent;
 import io.quarkiverse.mcp.server.Tool;
 import io.quarkiverse.mcp.server.ToolResponse;
+import io.quarkus.security.identity.SecurityIdentity;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import org.acme.audit.Audited;
 import org.acme.model.Attendee;
 import org.acme.model.Session;
 
@@ -12,13 +15,18 @@ import java.util.List;
 import java.util.Optional;
 
 @ApplicationScoped
+@Audited
 public class AttendeeTools {
 
     @Inject
     ConferenceData conferenceData;
 
-    @Tool(name = "my_profile", description = "Return the profile of the attendee with the given username: full name, email, ticket tier, and dietary requirements.")
-    ToolResponse myProfile(String username) {
+    @Inject
+    SecurityIdentity identity;
+
+    @Tool(name = "my_profile", description = "Return the profile of the currently authenticated attendee: full name, email, ticket tier, and dietary requirements.")
+    ToolResponse myProfile() {
+        String username = identity.getPrincipal().getName();
         Optional<Attendee> found = conferenceData.attendeeByUsername(username);
         if (found.isEmpty()) {
             return ToolResponse.success(new TextContent("No attendee found with username: " + username));
@@ -32,8 +40,9 @@ public class AttendeeTools {
         return ToolResponse.success(new TextContent(result));
     }
 
-    @Tool(name = "my_schedule", description = "Return the list of accepted sessions booked by the attendee with the given username.")
-    ToolResponse mySchedule(String username) {
+    @Tool(name = "my_schedule", description = "Return the list of accepted sessions booked by the currently authenticated attendee.")
+    ToolResponse mySchedule() {
+        String username = identity.getPrincipal().getName();
         List<Session> sessions = conferenceData.scheduleFor(username);
         if (sessions.isEmpty()) {
             return ToolResponse.success(new TextContent("No sessions found for username: " + username));
@@ -47,6 +56,7 @@ public class AttendeeTools {
         return ToolResponse.success(new TextContent(sb.toString()));
     }
 
+    @RolesAllowed("organizer")
     @Tool(name = "lookup_attendee", description = "Find an attendee by name or username and return their full profile including email and dietary requirements.")
     ToolResponse lookupAttendee(String name) {
         Optional<Attendee> byUsername = conferenceData.attendeeByUsername(name);
@@ -76,12 +86,13 @@ public class AttendeeTools {
         return ToolResponse.success(new TextContent("No attendee found with name or username: " + name));
     }
 
-    @Tool(name = "book_session", description = "Book an accepted session for the attendee with the given username. Provide the session ID.")
-    ToolResponse bookSession(String username, String sessionId) {
+    @Tool(name = "book_session", description = "Book an accepted session for the currently authenticated attendee. Provide the session ID.")
+    ToolResponse bookSession(String sessionId) {
+        String username = identity.getPrincipal().getName();
         boolean success = conferenceData.book(username, sessionId);
         if (success) {
             return ToolResponse.success(new TextContent("Session " + sessionId + " booked for " + username + "."));
         }
-        return ToolResponse.success(new TextContent("Failed to book session " + sessionId + " for " + username + ". The session may not exist or may not be accepted."));
+        return ToolResponse.success(new TextContent("Failed to book session " + sessionId + ". The session may not exist or may not be accepted."));
     }
 }
