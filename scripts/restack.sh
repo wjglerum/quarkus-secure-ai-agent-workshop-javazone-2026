@@ -53,8 +53,8 @@ fi
 echo "==> verifying each branch builds"
 for branch in "${BRANCHES[@]}"; do
   git checkout --quiet "$branch"
-  echo "==> ./mvnw -B verify on $branch"
-  ./mvnw -B -q verify
+  echo "==> ./mvnw -B clean verify on $branch"
+  ./mvnw -B -q clean verify
 done
 
 echo "==> checking that no branch drifted outside the application code"
