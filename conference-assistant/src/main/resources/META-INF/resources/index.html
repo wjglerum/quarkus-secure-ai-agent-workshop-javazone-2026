@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>JavaZone Conference Assistant</title>
     <script src="/_importmap/generated_importmap.js"></script>
     <script type="module">
@@ -9,42 +10,142 @@
     </script>
     <style>
         :root {
-            --main-bg-color: rgb(246, 242, 242);
-            --main-text-color: rgb(98, 121, 237);
+            --bg: #05080a;
+            --panel: #0c1318;
+            --panel2: #0a1014;
+            --ink: #d7e4dd;
+            --muted: #7d9489;
+            --dim: #4a5a52;
+            --green: #2bff88;
+            --magenta: #ff2e88;
+            --line2: #1d3138;
+            --mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code", Menlo, Monaco, Consolas, monospace;
+            --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
 
-        .header {
-            font-size: 50px;
-            font-weight: 900;
-            color: var(--main-text-color);
-            text-align: center;
-            padding: 1em;
-            background: var(--main-bg-color);
+        * { box-sizing: border-box; }
+        html, body { margin: 0; min-height: 100%; }
+
+        body {
+            background:
+                radial-gradient(1200px 700px at 78% -10%, rgba(255, 46, 136, .10), transparent 60%),
+                radial-gradient(1100px 650px at 12% 115%, rgba(43, 255, 136, .10), transparent 60%),
+                var(--bg);
+            color: var(--ink);
+            font: 400 18px/1.55 var(--sans);
         }
 
-        .body {
-            margin-left: auto;
-            margin-right: auto;
-            width: 50%;
-            text-align: justify;
-            font-size: 20px;
+        /* faint grid for the terminal feel, same as the deck */
+        body::before {
+            content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+            background-image:
+                linear-gradient(rgba(43, 255, 136, .035) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(43, 255, 136, .035) 1px, transparent 1px);
+            background-size: 46px 46px;
+            mask-image: radial-gradient(ellipse 90% 80% at 50% 50%, #000 55%, transparent 100%);
+        }
+
+        main {
+            position: relative; z-index: 1;
+            min-height: 100vh;
+            display: flex; flex-direction: column; justify-content: center;
+            max-width: 1180px; margin: 0 auto;
+            padding: 7vh 8vw 9vh;
+        }
+
+        .kicker {
+            font-family: var(--mono);
+            color: var(--green);
+            font-weight: 600; letter-spacing: .16em; text-transform: lowercase;
+            font-size: 13px; margin-bottom: 16px;
+            text-shadow: 0 0 14px rgba(43, 255, 136, .55);
+        }
+        .kicker::before { content: "> "; }
+
+        h1 {
+            font-family: var(--mono);
+            font-size: clamp(30px, 5.4vw, 56px); line-height: 1.06; margin: 0 0 18px;
+            letter-spacing: -.01em; font-weight: 700;
+            text-shadow: 0 0 26px rgba(43, 255, 136, .30);
+        }
+        .accent2 { color: var(--magenta); text-shadow: 0 0 14px rgba(255, 46, 136, .5); }
+
+        .cursor {
+            display: inline-block; width: .62ch; height: 1.02em; background: var(--green);
+            margin-left: 4px; transform: translateY(2px);
+            box-shadow: 0 0 16px rgba(43, 255, 136, .8);
+            animation: blink 1.05s steps(1) infinite;
+        }
+        @keyframes blink { 50% { opacity: 0; } }
+
+        p.lead { font-size: clamp(17px, 2.1vw, 22px); color: var(--muted); margin: 0 0 10px; max-width: 42ch; }
+
+        .tags { margin-top: 20px; }
+        .tag {
+            display: inline-block; font-family: var(--mono); font-size: 12.5px;
+            background: var(--panel); border: 1px solid var(--line2); color: var(--muted);
+            border-radius: 6px; padding: 4px 11px; margin: 0 8px 8px 0; letter-spacing: .04em;
+        }
+
+        .hint {
+            font-family: var(--mono); font-size: 13px; color: var(--dim);
+            margin-top: 28px; letter-spacing: .03em;
+        }
+        .hint code {
+            font-family: var(--mono); background: #04110b; border: 1px solid var(--line2);
+            border-radius: 6px; padding: 2px 7px; color: #69ffae;
+        }
+
+        /* wc-chatbot theming: the component reads these from the outer tree */
+        chat-bot {
+            --chatbot-header-bg-color: #0c1318;
+            --chatbot-header-title-color: #d7e4dd;
+            --chatbot-body-bg-color: #0a1014;
+            --chatbot-send-button-color: #2bff88;
+            --chatbot-avatar-bg-color: #2bff88;
+            --chatbot-container-width: 380px;
+            --chatbot-container-height: 540px;
         }
     </style>
 </head>
 <body>
-<div class="header">
-    <h1>JavaZone Conference Assistant</h1>
-</div>
-<div class="body">
-    <p>Click the yellow chatbot icon to chat with your bot!</p>
-    <p>Follow the instructions of the workshop in the README.md</p>
-</div>
-<div class="footer">
-    <chat-bot></chat-bot>
-</div>
+<main>
+    <div class="kicker">javazone_2026 --workshop</div>
+    <h1>Conference assistant<span class="accent2">.</span><span class="cursor"></span></h1>
+    <p class="lead">A Quarkus and LangChain4j agent with tools, RAG and MCP. Deliberately insecure, on purpose.</p>
+    <div class="tags">
+        <span class="tag">hands on</span><span class="tag">exploit then defend</span><span class="tag">OWASP LLM Top 10</span>
+    </div>
+    <p class="hint">Open the chat, bottom right. Step instructions live in <code>README.md</code>.</p>
+</main>
 
-<script>
+<chat-bot title="conference_assistant"></chat-bot>
+
+<script type="module">
+    // A module so it runs after 'wc-chatbot' has been imported and the element upgraded.
+    await customElements.whenDefined("chat-bot");
     const chatBot = document.getElementsByTagName("chat-bot")[0];
+
+    // The widget renders in a shadow root, so the parts it does not expose as
+    // custom properties are themed by injecting one stylesheet into that root.
+    const theme = document.createElement("style");
+    theme.textContent = `
+        .chatbot-container { background-color: #0a1014; border: 1px solid #1d3138;
+                             box-shadow: 0 24px 60px -20px rgba(0,0,0,.9); font-family: ui-monospace, Menlo, monospace; }
+        .chatbot-header { border-bottom: 1px solid #1d3138; font-family: ui-monospace, Menlo, monospace; }
+        .chatbot-header .right button.minimize { border-color: #4a5a52; }
+        .chatbot-footer { background-color: #0c1318; border-top: 1px solid #1d3138; }
+        .chatbot-input input { background-color: #04110b; border: 1px solid #1d3138; color: #d7e4dd;
+                               padding: 8px 10px; font-family: ui-monospace, Menlo, monospace; }
+        .chatbot-input input::placeholder { color: #4a5a52; }
+        .chatbot-input button { color: #05080a; font-weight: 700; font-family: ui-monospace, Menlo, monospace; }
+        /* [part] only to outrank the bubble's own :host defaults */
+        chat-bubble[part] { --chat-bubble-color: #0f171d; --chat-bubble-font-color: #d7e4dd;
+                            --chat-bubble-right-color: #12241c; --chat-bubble-font-right-color: #a9f5cd;
+                            --chat-bubble-avatar-color: #2bff88; }
+    `;
+    chatBot.shadowRoot.appendChild(theme);
+
     const socket = new WebSocket("ws://" + window.location.host + "/chat-bot");
 
     socket.onmessage = function (event) {
