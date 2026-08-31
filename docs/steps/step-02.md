@@ -59,10 +59,31 @@ quarkus.http.auth.proactive=false
 quarkus.oidc.application-type=service
 quarkus.oidc.resource-metadata.enabled=true
 quarkus.oidc.resource-metadata.scopes=attendee
+quarkus.oidc.resource-metadata.force-https-scheme=false
 quarkus.http.auth.permission.mcp.paths=/mcp,/mcp/*
 quarkus.http.auth.permission.mcp.policy=mcp-scope
 quarkus.http.auth.policy.mcp-scope.roles-allowed=attendee
 ```
+
+`force-https-scheme` defaults to `true`, which would advertise an `https` URL for a plain-HTTP dev server and break discovery. It is off here for local development only.
+
+The server also joins the Keycloak the agent already uses. This half is easy to miss and produces the most confusing failure in the whole workshop if you skip it:
+
+```properties
+quarkus.keycloak.devservices.shared=true
+quarkus.keycloak.devservices.service-name=javazone-keycloak
+quarkus.keycloak.devservices.users.alice=alice
+quarkus.keycloak.devservices.users.carol=carol
+quarkus.keycloak.devservices.users.dave=dave
+quarkus.keycloak.devservices.users.bob=bob
+quarkus.keycloak.devservices.roles.alice=attendee
+quarkus.keycloak.devservices.roles.carol=attendee
+quarkus.keycloak.devservices.roles.dave=attendee
+quarkus.keycloak.devservices.roles.bob=attendee,organizer
+```
+
+> [!IMPORTANT]
+> `quarkus.keycloak.devservices.service-name` defaults to `keycloak`. Without these lines the MCP server starts its **own** Keycloak container with a different issuer, and every call from the agent fails with a 401 that looks like a token propagation bug.
 
 Now an unauthenticated call to `/mcp` is rejected with a `401`, and a call whose token does not carry the `attendee` role is rejected by the `mcp-scope` policy. The server validates the token signature and issuer against the shared Keycloak, so it only trusts tokens minted by the same provider the agent logged in against. The resource metadata drives the MCP authorization challenge so clients know which scope is required.
 
@@ -80,7 +101,7 @@ The `conference-assistant` gains the `quarkus-langchain4j-oidc-mcp-auth-provider
 The tools in `AttendeeTools.java` are rewritten:
 
 - `myProfile()` and `mySchedule()` lose their `username` parameter entirely. They inject `SecurityIdentity` and call `identity.getPrincipal().getName()` to get the caller's username from the verified token. You can only retrieve your own data.
-- `lookupAttendee(String name)` gains `@RolesAllowed("organizer")`. An attendee calling this tool gets a `ForbiddenException` before the method body runs.
+- `lookupAttendee(String name)` gains `@RolesAllowed("organizer")`. When an attendee calls it the security check throws before the method body runs, and `AuditInterceptor` (section 4) catches that and hands back an error result instead, so the exception itself never reaches the caller.
 - `bookSession(String sessionId)` also derives the username from the identity rather than accepting it as a parameter.
 
 The model can no longer pass an arbitrary username to look up someone else's profile. The identity comes from the token, not from the LLM's output.
@@ -112,13 +133,15 @@ subject=alice tool=lookupAttendee decision=DENY outcome=forbidden args={name=c**
 
 | File | Change |
 | ---- | ------ |
-| `conference-mcp-server/pom.xml` | `quarkus-mcp-server-oidc` dependency added |
+| `conference-mcp-server/pom.xml` | `quarkus-mcp-server-oidc` added; `quarkus-test-security` and `quarkus-test-security-oidc` added in test scope, without which the tests below do not compile |
 | `conference-mcp-server/src/main/resources/application.properties` | OIDC service mode, resource metadata, MCP scope policy, shared Keycloak dev service with config-based users and roles |
 | `conference-mcp-server/src/main/java/org/acme/AttendeeTools.java` | `SecurityIdentity` injected; `myProfile`/`mySchedule`/`bookSession` drop username param; `lookupAttendee` gets `@RolesAllowed("organizer")`; class annotated `@Audited` |
 | `conference-mcp-server/src/main/java/org/acme/OrganizerTools.java` | Class annotated `@Audited` |
 | `conference-mcp-server/src/main/java/org/acme/audit/` | New `Audited`, `AuditInterceptor`, `AuditLog`, `AuditEntry` - per-call audit logging with PII redaction |
 | `conference-assistant/pom.xml` | `quarkus-langchain4j-oidc-mcp-auth-provider` dependency added |
-| `conference-assistant/src/main/resources/application.properties` | Token propagation; shared Keycloak dev service with config-based users and roles; MCP health check disabled for tests |
+| `conference-mcp-server/src/test/java/org/acme/AttendeeToolsTest.java` | New: proves identity-derived access for alice and bob |
+| `conference-mcp-server/src/test/java/org/acme/AuditLogTest.java` | New: proves the audit record is written and the PII in it is redacted |
+| `conference-assistant/src/main/resources/application.properties` | Both MCP health probes turned off. The server now needs a token, and neither the MicroProfile check nor the per-client background ping has one, so the ping logged a 401 stack trace every 60 seconds into the console you are about to read audit lines in |
 
 ---
 
@@ -173,10 +196,14 @@ Note that the target name is masked (`c***`, `a***`): the audit trail proves who
 cd conference-mcp-server && ./mvnw test -Dtest=AttendeeToolsTest,AuditLogTest
 ```
 
+Both test files arrive with this branch, under `conference-mcp-server/src/test/java/org/acme/`. If you are applying the fix by hand on `main`, copy them from here.
+
 The test uses `@TestSecurity` to inject identities without a real Keycloak server:
 - `alice` with role `attendee` can see her own profile
-- `alice` with role `attendee` gets a `ForbiddenException` when calling `lookupAttendee`
+- `alice` with role `attendee` gets an error response back from `lookupAttendee`, and it carries none of Carol's data
 - `bob` with roles `attendee` and `organizer` can call `lookupAttendee` successfully
+
+The denial comes back as a tool **result** marked as an error, not as a thrown exception. `AuditInterceptor` sits outside the security check, so it records the `DENY` and then converts the `ForbiddenException` into something the model can read and relay. Without that, the model gets a bare Java class name, retries until it gives up, and the user sees nothing at all.
 
 `AuditLogTest` proves the audit trail is correct and PII-safe:
 - an allowed call records an `ALLOW` entry attributed to `alice`
