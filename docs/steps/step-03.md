@@ -58,7 +58,9 @@ public class OrganizerTools {
 }
 ```
 
-`@RolesAllowed("organizer")` is a standard Jakarta Security annotation. Quarkus enforces it before any method in the class runs. When an attendee's token (which carries only the `attendee` role) reaches any method in `OrganizerTools`, the security layer throws `ForbiddenException` and the tool body never executes.
+`@RolesAllowed("organizer")` is a standard Jakarta annotation, from `jakarta.annotation.security`. Quarkus enforces it before any method in the class runs. When an attendee's token (which carries only the `attendee` role) reaches any method in `OrganizerTools`, the security layer throws `ForbiddenException` and the tool body never executes.
+
+The attendee does not see that exception. `AuditInterceptor`, added in step-02, sits outside the security check: it records the `DENY` and returns an error result the model can read and relay as a sentence. That matters more than it sounds. A raw Java class name is not something a small model can interpret, so it retries the call until LangChain4j aborts the whole turn, and the chat window simply never answers.
 
 This works because token propagation from step-02 is already in place: the MCP server knows who the caller is. Step-02 established that the server receives a verified OIDC token; step-03 uses the roles in that token to gate the organizer tools.
 
@@ -106,8 +108,10 @@ Issue a comp ticket to me@example.com
 cd conference-mcp-server && ./mvnw test -Dtest=OrganizerToolsTest
 ```
 
-The test uses `@TestSecurity` to set up identities without a running server:
-- `alice` with role `attendee` gets `ForbiddenException` when calling `issueCompTicket`, `acceptTalk`, and `emailAllAttendees`
-- `bob` with roles `attendee` and `organizer` can call `issueCompTicket` successfully
+`OrganizerToolsTest` arrives with this branch, at `conference-mcp-server/src/test/java/org/acme/OrganizerToolsTest.java`. If you are applying the fix by hand on `main`, copy it from here.
+
+It uses `@TestSecurity` to set up identities without a running Keycloak (the `%test` profile swaps in the lightweight OIDC dev service):
+- `alice` with role `attendee` gets an error result back from `issueCompTicket`, `acceptTalk` and `emailAllAttendees`
+- `bob` with roles `attendee` and `organizer` can call all three successfully
 
 These assertions are deterministic. They do not involve the model and they will not flap based on LLM output.

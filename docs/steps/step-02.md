@@ -118,7 +118,7 @@ A small `audit` package on the MCP server adds a CDI interceptor (`@Audited`, ap
 - the **outcome** (`ok`, `error`, or `forbidden`),
 - the **arguments, with PII redacted**.
 
-The interceptor runs at a lower priority than the Quarkus `@RolesAllowed` interceptor, so it sits on the outside and can observe a `ForbiddenException` from the authorization check and log it as a `DENY` before rethrowing.
+The interceptor runs at a lower priority than the Quarkus `@RolesAllowed` interceptor, so it sits on the outside. That lets it observe a `ForbiddenException` from the authorization check, log it as a `DENY`, and return a readable error result in its place.
 
 > [!WARNING]
 > Audit logging has its own trap: a naive interceptor that dumps full arguments re-leaks the very PII you are trying to protect (this is the OWASP LLM02 risk you fix in step-04). The interceptor masks any argument named `email` or `name`, so a lookup of `carol` is recorded as `name=c***`, never the raw value.
