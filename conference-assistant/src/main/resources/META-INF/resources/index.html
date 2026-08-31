@@ -96,6 +96,24 @@
             border-radius: 6px; padding: 2px 7px; color: #69ffae;
         }
 
+        .session {
+            position: fixed; top: 0; right: 0; z-index: 3;
+            display: flex; align-items: center; gap: 14px;
+            padding: 14px 20px;
+            font-family: var(--mono); font-size: 12.5px; letter-spacing: .04em;
+            color: var(--dim);
+        }
+        /* [hidden] alone loses to display:flex, so spell the hidden state out */
+        .session[hidden] { display: none; }
+        .session b { color: var(--green); font-weight: 600; text-shadow: 0 0 12px rgba(43, 255, 136, .45); }
+        .session a {
+            color: var(--muted); text-decoration: none;
+            background: var(--panel); border: 1px solid var(--line2); border-radius: 6px;
+            padding: 4px 11px;
+            transition: color .15s, border-color .15s;
+        }
+        .session a:hover, .session a:focus-visible { color: var(--green); border-color: rgba(43, 255, 136, .45); }
+
         /* wc-chatbot theming: the component reads these from the outer tree */
         chat-bot {
             --chatbot-header-bg-color: #0c1318;
@@ -103,12 +121,17 @@
             --chatbot-body-bg-color: #0a1014;
             --chatbot-send-button-color: #2bff88;
             --chatbot-avatar-bg-color: #2bff88;
-            --chatbot-container-width: 380px;
-            --chatbot-container-height: 540px;
+            --chatbot-container-width: 560px;
+            --chatbot-container-height: 660px;
         }
     </style>
 </head>
 <body>
+<div class="session" id="session" hidden>
+    <span>signed in as <b id="who"></b></span>
+    <a href="/logout">log out</a>
+</div>
+
 <main>
     <div class="kicker">javazone_2026 --workshop</div>
     <h1>Conference assistant<span class="accent2">.</span><span class="cursor"></span></h1>
@@ -145,6 +168,29 @@
                             --chat-bubble-avatar-color: #2bff88; }
     `;
     chatBot.shadowRoot.appendChild(theme);
+
+    // The 60% width cap that wastes most of the panel on long answers lives inside
+    // each bubble's own shadow root, so it can only be lifted from in there.
+    const bubbleSheet = new CSSStyleSheet();
+    bubbleSheet.replaceSync(`
+        .chat-message .chat-bubble { max-width: min(88%, 620px); border-radius: 10px; padding: 10px 14px; }
+        .typing-indicator { color: #7d9489; }
+        .typing-indicator .dots .dot { background-color: #7d9489; }
+    `);
+    new MutationObserver(records => records.forEach(record => record.addedNodes.forEach(node => {
+        if (node.tagName === "CHAT-BUBBLE" && node.shadowRoot) {
+            node.shadowRoot.adoptedStyleSheets = [...node.shadowRoot.adoptedStyleSheets, bubbleSheet];
+        }
+    }))).observe(chatBot.shadowRoot, {childList: true, subtree: true});
+
+    // Who is signed in. Deliberately not awaited: the chat must not wait on it.
+    fetch("/api/me", {headers: {"Accept": "text/plain"}})
+        .then(res => res.ok ? res.text() : Promise.reject(res.status))
+        .then(name => {
+            document.getElementById("who").textContent = name.trim();
+            document.getElementById("session").hidden = false;
+        })
+        .catch(() => { /* no session bar rather than a broken one */ });
 
     const socket = new WebSocket("ws://" + window.location.host + "/chat-bot");
 
