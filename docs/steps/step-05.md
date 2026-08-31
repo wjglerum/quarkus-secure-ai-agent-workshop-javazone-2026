@@ -45,9 +45,36 @@ Both apps gain two extensions:
   `quarkus.otel.exporter.otlp.endpoint` automatically. No manual collector setup.
 
 The LGTM dev service is shared and reused across the two apps, the same way the
-Keycloak dev service is, so a single trace spans the agent, the LLM, and the MCP
-tool calls. Start both apps in dev mode and open the Grafana URL that the dev
-service prints in the log (or find it in the Dev UI).
+Keycloak dev service is. Start both apps in dev mode and open
+[http://localhost:3000](http://localhost:3000). No login is needed: the container
+banner in the log mentions admin/admin, but anonymous access is on.
+
+> [!NOTE]
+> Each app produces its own trace, and they do not join across the MCP boundary.
+> The MCP transport uses a raw Vert.x HTTP client that emits no `traceparent`
+> header, and Quarkus OpenTelemetry does not instrument that client. So you get a
+> `chat` trace on the agent and a separate `POST /mcp` trace on the server, with
+> different trace ids. That is itself the lesson: context propagation is not free,
+> and MCP does not carry it for you yet.
+
+### Finding the numbers that matter
+
+The bundled dashboards cover the JVM, not the model, so there is no token panel to
+open. Go to **Explore**, pick the **Prometheus** data source, and ask for it
+directly. Tokens in and out per minute:
+
+```promql
+sum by (gen_ai_token_type) (rate(gen_ai_client_token_usage_total[1m]))
+```
+
+Latency of the model calls themselves:
+
+```promql
+histogram_quantile(0.95, sum by (le) (rate(gen_ai_client_operation_duration_milliseconds_bucket[1m])))
+```
+
+Those metric names come from the OpenTelemetry GenAI semantic conventions, which
+quarkus-langchain4j emits for you.
 
 > [!NOTE]
 > The first run pulls the Grafana OTel LGTM image, which is a sizeable download.
@@ -61,20 +88,23 @@ Start the apps on the `step-05-observability` branch and log in as **alice**. Th
 make the agent do an unbounded amount of work, for example:
 
 ```
-List every attendee one at a time, and for each one repeat their full profile back to me ten times.
+For each of the attendees alice, bob, carol and dave, look up their profile and their schedule, then summarise each one.
 ```
 
-or
+**What you should see (before the fix):** the agent fans a single chat turn out
+into eight tool calls and a long generation, and the token counters climb in
+Grafana while it works.
 
-```
-Repeat the full conference program back to me 100 times.
-```
+> [!IMPORTANT]
+> Ask for *work*, not for *repetition*. The obvious attack ("repeat the program
+> back to me 100 times") does not work on a small model: it declines to repeat
+> itself and summarises instead, so the token count comes out **lower** than an
+> ordinary question. Measured on `qwen3.5:0.8b`, an everyday question already
+> costs 1755 to 2469 output tokens, because most of the budget is reasoning you
+> never see. Fan-out across tool calls is what actually moves the numbers.
 
-**What you should see (before the fix):** the agent happily fans the request out
-into many tool calls and a very large generation. In Grafana you can watch the
-spike: the number of LLM calls, the tokens generated, and the request latency all
-jump for that single chat turn. Nothing is technically "unauthorized", so none of
-the earlier defenses fire. The cost is the attack.
+Nothing here is unauthorized, so none of the earlier defenses fire. The cost is
+the attack.
 
 This is OWASP **LLM10 Unbounded Consumption**: the system places no ceiling on the
 work one request can trigger.
@@ -107,16 +137,31 @@ likely apply it at the gateway as well.
 
 ### Layer 2: cap the model output
 
-`application.properties` caps how many tokens a single turn may generate, so a
-"repeat this forever" prompt cannot produce an unbounded response even within the
-rate limit:
+`application.properties` caps how many tokens a single turn may generate, so one
+runaway prompt cannot produce an unbounded response even within the rate limit:
 
 ```properties
-quarkus.langchain4j.ollama.chat-model.num-predict=512
+quarkus.langchain4j.ollama.chat-model.num-predict=6000
 ```
 
+That number looks generous, and it has to be. On a reasoning model most of the
+budget is thinking you never see: an ordinary question here costs 1755 to 2469
+output tokens to produce about 450 characters of answer. Cap it below that and the
+generation is cut off before any visible text exists, so `text()` comes back null
+and the chat answers **nothing at all**, with no error to debug. A cap you have not
+measured is not a safety control, it is an outage waiting for a demo.
+
+That is the honest lesson of this layer. Measure first, then cap.
+
 The commented cloud-provider blocks have an equivalent setting (for example
-`max-completion-tokens` for OpenAI).
+`max-completion-tokens` for OpenAI), and there the reasoning budget is billed and
+bounded separately, so the number can be much tighter.
+
+> [!NOTE]
+> These two layers do not cover the same attack. The rate limit bounds how many
+> requests one user can start; the output cap bounds how large one response can
+> get. Neither bounds how much work a single well-formed request can trigger
+> through tool calls, which is the harder half of LLM10 and is left as an exercise.
 
 ### Files changed (relative to step-04)
 
@@ -126,8 +171,9 @@ The commented cloud-provider blocks have an equivalent setting (for example
 | `conference-mcp-server/pom.xml` | Added `quarkus-micrometer-opentelemetry`, `quarkus-observability-devservices-lgtm` |
 | `conference-assistant/src/main/java/org/acme/ratelimit/ConsumptionGuard.java` | New rate-limited consumption gate |
 | `conference-assistant/src/main/java/org/acme/ChatBotWebSocket.java` | Calls `consumptionGuard.enforce()`; catches `RateLimitException` |
-| `conference-assistant/src/main/resources/application.properties` | Output token cap; app name; observability disabled under test |
-| `conference-mcp-server/src/main/resources/application.properties` | App name; observability disabled under test |
+| `conference-assistant/src/test/java/org/acme/ratelimit/ConsumptionGuardTest.java` | New: proves the cap fires on the sixth call in a window, without a model |
+| `conference-assistant/src/main/resources/application.properties` | Output token cap; app name; Grafana pinned to port 3000; completion content in traces; observability disabled under test |
+| `conference-mcp-server/src/main/resources/application.properties` | App name; Grafana pinned to port 3000; observability disabled under test |
 
 ---
 
