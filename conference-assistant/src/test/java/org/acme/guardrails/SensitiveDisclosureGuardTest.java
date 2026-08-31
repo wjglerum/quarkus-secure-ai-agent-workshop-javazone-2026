@@ -1,6 +1,6 @@
 package org.acme.guardrails;
 
-import dev.langchain4j.guardrail.GuardrailResult;
+import io.quarkus.security.runtime.QuarkusSecurityIdentity;
 import org.junit.jupiter.api.Test;
 
 import static dev.langchain4j.data.message.AiMessage.from;
@@ -11,6 +11,21 @@ class SensitiveDisclosureGuardTest {
     private SensitiveDisclosureGuard newGuard() {
         SensitiveDisclosureGuard guard = new SensitiveDisclosureGuard();
         guard.markersCsv = "INTERNAL - ORGANIZERS ONLY,Fee:,Reviewer score average:";
+        guard.identity = QuarkusSecurityIdentity.builder()
+                .setPrincipal(() -> "alice")
+                .addRole("attendee")
+                .build();
+        return guard;
+    }
+
+    private SensitiveDisclosureGuard newOrganizerGuard() {
+        SensitiveDisclosureGuard guard = new SensitiveDisclosureGuard();
+        guard.markersCsv = "INTERNAL - ORGANIZERS ONLY,Fee:,Reviewer score average:";
+        guard.identity = QuarkusSecurityIdentity.builder()
+                .setPrincipal(() -> "bob")
+                .addRole("attendee")
+                .addRole("organizer")
+                .build();
         return guard;
     }
 
@@ -41,6 +56,26 @@ class SensitiveDisclosureGuardTest {
     @Test
     void detectionIsCaseInsensitive() {
         var res = newGuard().validate(from("internal - organizers only header present"));
+        org.assertj.core.api.Assertions.assertThat(res.isSuccess()).isFalse();
+    }
+
+    @Test
+    void organizerReceivesTheFees() {
+        assertThat(newOrganizerGuard().validate(from("Fee: 2500 EUR for alice")))
+                .isSuccessful();
+    }
+
+    @Test
+    void organizerReceivesTheReviewerScores() {
+        assertThat(newOrganizerGuard().validate(from("Reviewer score average: 4.7 / 5.0")))
+                .isSuccessful();
+    }
+
+    @Test
+    void anonymousCallerIsTreatedAsNonOrganizer() {
+        SensitiveDisclosureGuard guard = new SensitiveDisclosureGuard();
+        guard.markersCsv = "INTERNAL - ORGANIZERS ONLY,Fee:,Reviewer score average:";
+        var res = guard.validate(from("Fee: 2500 EUR for alice"));
         org.assertj.core.api.Assertions.assertThat(res.isSuccess()).isFalse();
     }
 }
