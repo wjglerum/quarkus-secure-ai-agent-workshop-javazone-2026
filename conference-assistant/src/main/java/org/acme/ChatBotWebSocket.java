@@ -34,6 +34,8 @@ public class ChatBotWebSocket {
             String msg = e.getMessage();
             int idx = msg.indexOf("failed with this message: ");
             return idx >= 0 ? msg.substring(idx + "failed with this message: ".length()) : msg;
+        } catch (Exception e) {
+            return "Something went wrong handling that request. Check the application log for details.";
         }
     }
 }
