@@ -1,6 +1,5 @@
 package org.acme;
 
-import io.quarkus.security.ForbiddenException;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import jakarta.inject.Inject;
@@ -12,7 +11,6 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @QuarkusTest
@@ -38,7 +36,8 @@ class AuditLogTest {
     @Test
     @TestSecurity(user = "alice", roles = "attendee")
     void deniedCallIsAuditedAndArgumentsRedacted() {
-        assertThrows(ForbiddenException.class, () -> attendeeTools.lookupAttendee("carol"));
+        var response = attendeeTools.lookupAttendee("carol");
+        assertTrue(response.isError());
 
         AuditEntry entry = lastEntryFor("lookupAttendee");
         assertEquals("alice", entry.subject());

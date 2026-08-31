@@ -3,7 +3,6 @@ package org.acme;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import jakarta.inject.Inject;
-import io.quarkus.security.ForbiddenException;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -25,7 +24,10 @@ class AttendeeToolsTest {
     @Test
     @TestSecurity(user = "alice", roles = "attendee")
     void attendeeCannotLookupOtherAttendee() {
-        assertThrows(ForbiddenException.class, () -> attendeeTools.lookupAttendee("carol"));
+        var response = attendeeTools.lookupAttendee("carol");
+        assertNotNull(response);
+        assertTrue(response.isError());
+        assertFalse(response.content().toString().contains("carol@"));
     }
 
     @Test

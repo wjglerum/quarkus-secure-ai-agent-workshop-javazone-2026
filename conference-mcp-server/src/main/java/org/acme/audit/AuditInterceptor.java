@@ -1,5 +1,6 @@
 package org.acme.audit;
 
+import io.quarkiverse.mcp.server.ToolResponse;
 import io.quarkus.security.ForbiddenException;
 import io.quarkus.security.UnauthorizedException;
 import io.quarkus.security.identity.SecurityIdentity;
@@ -37,7 +38,7 @@ public class AuditInterceptor {
             return result;
         } catch (ForbiddenException | UnauthorizedException e) {
             auditLog.record(subject, tool, args, "DENY", "forbidden");
-            throw e;
+            return ToolResponse.error("You do not have permission to do this. This tool requires the organizer role.");
         } catch (Exception e) {
             auditLog.record(subject, tool, args, "ALLOW", "error");
             throw e;
