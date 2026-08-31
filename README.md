@@ -34,50 +34,22 @@ Make sure you have the following installed locally:
 - [JDK 25](https://adoptium.net/) (you can use [SDKMAN!](https://sdkman.io) to install it)
 - [IntelliJ IDEA](https://www.jetbrains.com/idea/) or [VS Code](https://code.visualstudio.com/) with the Java and Quarkus extension
 - [Podman Desktop](https://podman-desktop.io) or [Docker Desktop](https://www.docker.com/products/docker-desktop/) - **required** for the Postgres and Keycloak dev services that the apps start automatically
-- [Ollama](https://ollama.com), installed **and running**
+- [Ollama](https://ollama.com)
 - [Quarkus CLI](https://quarkus.io/guides/cli-tooling) (optional but handy)
 
-You also need roughly **8 GB of free disk** and a container runtime with enough memory. Podman's default machine is often too small for Keycloak and Postgres together:
+### Initial setup
+
+Clone the repository and warm the dependency cache. This is slow the first time because Maven downloads the Quarkus BOM and all extensions:
 
 ```shell
-podman machine set --memory 8192 --cpus 4
+./mvnw install -DskipTests
 ```
 
-Docker Desktop users: Settings, then Resources.
+Then pull the default Ollama model. The first download is about 1 GB and is the one slow gate in the whole workshop - start it now and let it run in the background:
 
-## Do this the night before
-
-Not on conference wifi. The full cold start is about **3 GB of downloads**, and all of it caches, so none of it needs to happen in the room.
-
-1. Warm the Maven cache. Slow the first time, because Maven fetches the Quarkus BOM and every extension:
-
-   ```shell
-   ./mvnw install -DskipTests
-   ```
-
-2. Pull the model, then confirm Ollama is actually serving:
-
-   ```shell
-   ollama pull qwen3.5:0.8b
-   curl -s localhost:11434/api/tags
-   ```
-
-   That second command matters. If nothing answers on port 11434, Quarkus starts its own Ollama **container** instead, which is a multi-gigabyte download you will not enjoy discovering at 09:15.
-
-3. Pre-pull the dev service images:
-
-   ```shell
-   docker pull postgres:18
-   docker pull quay.io/keycloak/keycloak:26.7.1
-   docker pull testcontainers/ryuk:0.14.0
-   ```
-
-4. Smoke test it. Start both apps (see below), log in as alice, and ask "What is my schedule?". If you get an answer, you are ready. Stop them again.
-
-If you arrive without having done this, say so at the start rather than at minute forty. There is a USB stick.
-
-> [!NOTE]
-> `qwen3.5:0.8b` is a reasoning model, so you will see it think before it answers, and at this size its tool calling is at the bottom of the reliability curve. If tool calls misfire repeatedly, `ollama pull qwen3.5:4b` and change `quarkus.langchain4j.ollama.chat-model.model-id`.
+```shell
+ollama pull qwen3.5:0.8b
+```
 
 ## Two applications, two ports
 
@@ -104,7 +76,7 @@ Open [http://localhost:8080](http://localhost:8080) in your browser. A chat widg
 > From step-02 onward both apps share a Keycloak dev service container. Start the MCP server first so Keycloak is already running when the agent starts.
 
 > [!NOTE]
-> First run on a cold machine pulls the model and three container images, about 3 GB in total. Do it the night before, not here.
+> The first Ollama model download (`qwen3.5:0.8b`, about 1 GB) is the slow gate. Let it finish before you expect responses from the chat.
 
 ## Logging in
 
