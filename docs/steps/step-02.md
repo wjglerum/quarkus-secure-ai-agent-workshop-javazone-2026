@@ -147,7 +147,7 @@ subject=alice tool=lookupAttendee decision=DENY outcome=forbidden args={name=c**
 
 ## Verify - after the fix
 
-Start the apps on the `step-02-token-propagation` branch:
+Apply the changes above to your workspace, then restart the apps:
 
 ```shell
 cd conference-mcp-server && ./mvnw quarkus:dev

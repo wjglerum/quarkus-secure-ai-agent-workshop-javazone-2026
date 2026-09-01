@@ -84,7 +84,7 @@ quarkus-langchain4j emits for you.
 
 ## Exploit - before the fix
 
-Start the apps on the `step-05-observability` branch and log in as **alice**. Then send a prompt designed to
+With the step-04 changes applied to your workspace, start the apps and log in as **alice**. Then send a prompt designed to
 make the agent do an unbounded amount of work, for example:
 
 ```
@@ -179,7 +179,7 @@ bounded separately, so the number can be much tighter.
 
 ## Verify - after the fix
 
-Start the apps on the `step-05-observability` branch:
+Apply the changes above to your workspace, then restart the apps:
 
 ```shell
 cd conference-mcp-server && ./mvnw quarkus:dev

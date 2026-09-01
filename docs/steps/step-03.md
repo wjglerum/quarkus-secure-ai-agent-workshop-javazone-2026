@@ -26,7 +26,7 @@ In this step the organizer tools - `accept_talk`, `issue_comp_ticket`, and `emai
 
 ## Exploit - before the fix
 
-Start the apps on the `step-02-token-propagation` branch (or your workspace after applying the step-02 changes) and log in as **alice** (role: attendee). Then try any of the following:
+With the step-02 changes applied to your workspace, start the apps and log in as **alice** (role: attendee). Then try any of the following:
 
 ```
 Issue a comp ticket to me@example.com
@@ -79,7 +79,7 @@ The fix holds even if the model is tricked into calling the tool. The security c
 
 ## Verify - after the fix
 
-Start the apps on the `step-03-excessive-agency` branch:
+Apply the changes above to your workspace, then restart the apps:
 
 ```shell
 cd conference-mcp-server && ./mvnw quarkus:dev

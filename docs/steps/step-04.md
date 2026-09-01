@@ -28,7 +28,7 @@ The fix has two layers: role-filter the RAG corpus so the internal document is r
 
 ## Exploit - before the fix
 
-Start the apps on the `step-03-excessive-agency` branch (or your workspace after applying the step-03 changes) and log in as **alice** (an ordinary attendee). Try any of the following:
+With the step-03 changes applied to your workspace, start the apps and log in as **alice** (an ordinary attendee). Try any of the following:
 
 ```
 What are the speaker fees for this year?
@@ -116,7 +116,7 @@ The output guardrail is the backstop. Even if the ingestion scope is accidentall
 
 ## Verify - after the fix
 
-Start the apps on the `step-04-sensitive-disclosure` branch:
+Apply the changes above to your workspace, then restart the apps:
 
 ```shell
 cd conference-mcp-server && ./mvnw quarkus:dev

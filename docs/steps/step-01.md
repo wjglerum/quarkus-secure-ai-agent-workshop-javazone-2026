@@ -97,7 +97,7 @@ This tells the model explicitly that retrieved content is data, not commands. It
 
 ## Verify - after the fix
 
-Restart the apps on the `step-01-prompt-injection` branch (or apply the changes to your workspace and restart):
+Apply the changes above to your workspace, then restart the apps:
 
 ```shell
 cd conference-mcp-server && ./mvnw quarkus:dev
