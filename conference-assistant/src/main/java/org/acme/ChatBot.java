@@ -2,14 +2,17 @@ package org.acme;
 
 import dev.langchain4j.service.SystemMessage;
 import dev.langchain4j.service.UserMessage;
-import io.quarkiverse.langchain4j.RegisterAiService;
 import dev.langchain4j.service.guardrail.InputGuardrails;
+import dev.langchain4j.service.guardrail.OutputGuardrails;
+import io.quarkiverse.langchain4j.RegisterAiService;
 import io.quarkiverse.langchain4j.mcp.runtime.McpToolBox;
 import jakarta.enterprise.context.SessionScoped;
 import org.acme.guardrails.PromptInjectionGuard;
+import org.acme.guardrails.SensitiveDisclosureGuard;
+import org.acme.rag.RoleFilteredRagAugmentor;
 
 @SessionScoped
-@RegisterAiService
+@RegisterAiService(retrievalAugmentor = RoleFilteredRagAugmentor.class)
 public interface ChatBot {
 
     @SystemMessage("""
@@ -20,5 +23,6 @@ public interface ChatBot {
     @UserMessage("{userMessage}")
     @McpToolBox("conference")
     @InputGuardrails({PromptInjectionGuard.class})
+    @OutputGuardrails({SensitiveDisclosureGuard.class})
     String chat(String userMessage);
 }
