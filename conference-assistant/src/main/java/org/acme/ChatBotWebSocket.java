@@ -5,6 +5,7 @@ import io.quarkus.security.Authenticated;
 import io.quarkus.security.identity.SecurityIdentity;
 import io.quarkus.websockets.next.OnOpen;
 import io.quarkus.websockets.next.OnTextMessage;
+import io.quarkus.logging.Log;
 import io.quarkus.websockets.next.WebSocket;
 import jakarta.inject.Inject;
 
@@ -35,6 +36,7 @@ public class ChatBotWebSocket {
             int idx = msg.indexOf("failed with this message: ");
             return idx >= 0 ? msg.substring(idx + "failed with this message: ".length()) : msg;
         } catch (Exception e) {
+            Log.error("Chatbot failed to handle message: " + message, e);
             return "Something went wrong handling that request. Check the application log for details.";
         }
     }
