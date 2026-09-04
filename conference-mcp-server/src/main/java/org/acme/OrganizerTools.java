@@ -5,8 +5,10 @@ import io.quarkiverse.mcp.server.Tool;
 import io.quarkiverse.mcp.server.ToolResponse;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import org.acme.audit.Audited;
 
 @ApplicationScoped
+@Audited
 public class OrganizerTools {
 
     @Inject
