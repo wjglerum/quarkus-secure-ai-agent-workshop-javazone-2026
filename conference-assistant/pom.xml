@@ -97,6 +97,18 @@
             <artifactId>quarkus-langchain4j-easy-rag</artifactId>
         </dependency>
         <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-smallrye-fault-tolerance</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-micrometer-opentelemetry</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-observability-devservices-lgtm</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.jboss.logmanager</groupId>
             <artifactId>log4j2-jboss-logmanager</artifactId>
         </dependency>

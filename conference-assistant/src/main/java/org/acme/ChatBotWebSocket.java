@@ -7,7 +7,9 @@ import io.quarkus.websockets.next.OnOpen;
 import io.quarkus.websockets.next.OnTextMessage;
 import io.quarkus.logging.Log;
 import io.quarkus.websockets.next.WebSocket;
+import io.smallrye.faulttolerance.api.RateLimitException;
 import jakarta.inject.Inject;
+import org.acme.ratelimit.ConsumptionGuard;
 
 @Authenticated
 @WebSocket(path = "/chat-bot")
@@ -15,6 +17,9 @@ public class ChatBotWebSocket {
 
     @Inject
     SecurityIdentity identity;
+
+    @Inject
+    ConsumptionGuard consumptionGuard;
 
     private final ChatBot chatBot;
 
@@ -30,7 +35,10 @@ public class ChatBotWebSocket {
     @OnTextMessage
     public String onTextMessage(String message) {
         try {
+            consumptionGuard.enforce();
             return chatBot.chat(message);
+        } catch (RateLimitException e) {
+            return "You are sending messages too quickly. Please wait a moment and try again.";
         } catch (GuardrailException e) {
             String msg = e.getMessage();
             int idx = msg.indexOf("failed with this message: ");
