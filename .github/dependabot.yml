@@ -12,10 +12,20 @@ updates:
     commit-message:
       prefix: "chore(ci)"
 
-  # Resolves the root aggregator and both application modules.
   - package-ecosystem: "maven"
-    directory: "/"
+    # One entry per module: each module pins its own versions, so the root
+    # aggregator alone only gets one of them bumped.
+    directories:
+      - "/"
+      - "/conference-mcp-server"
+      - "/conference-assistant"
     schedule:
       interval: "monthly"
     commit-message:
       prefix: "chore(deps)"
+    # Bump a dependency in every module in a single pull request.
+    groups:
+      maven:
+        group-by: "dependency-name"
+        patterns:
+          - "*"
