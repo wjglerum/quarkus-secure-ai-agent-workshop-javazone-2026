@@ -16,7 +16,6 @@ updates:
     # One entry per module: each module pins its own versions, so the root
     # aggregator alone only gets one of them bumped.
     directories:
-      - "/"
       - "/conference-mcp-server"
       - "/conference-assistant"
     schedule:
@@ -27,5 +26,3 @@ updates:
     groups:
       maven:
         group-by: "dependency-name"
-        patterns:
-          - "*"
